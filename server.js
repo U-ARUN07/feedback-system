@@ -1,135 +1,200 @@
-// server.js (with JSONBin persistent storage)
 const express = require('express');
+const bodyParser = require('body-parser');
 const path = require('path');
 const session = require('express-session');
 const WebSocket = require('ws');
+const axios = require('axios');
+
 const app = express();
 const port = process.env.PORT || 4000;
 
-// 🔑 Load environment variables (from Render)
-const USERS_BIN_ID = process.env.USERS_BIN_ID;
-const FEEDBACK_BIN_ID = process.env.FEEDBACK_BIN_ID;
-const JSONBIN_API_KEY = process.env.JSONBIN_API_KEY;
-const SESSION_SECRET = process.env.SESSION_SECRET || 'feedback@mlrit2025';
-
-// Middleware setup
-app.use(express.urlencoded({ extended: true }));
+// Middleware
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(session({
-  secret: SESSION_SECRET,
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: false }
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'feedback@mlrit2025',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false },
+  })
+);
+
+// Serve static files from the "public" folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Helper functions for JSONBin API
-async function readBin(binId) {
-  const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
-    headers: { "X-Master-Key": JSONBIN_API_KEY }
-  });
-  const data = await response.json();
-  return data.record || [];
+// Helper function: Load data from JSONBin
+async function loadBin(binId) {
+  try {
+    const response = await axios.get(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+      headers: {
+        'X-Master-Key': process.env.JSONBIN_API_KEY,
+      },
+    });
+    return response.data.record;
+  } catch (error) {
+    console.error('Error loading bin:', error.message);
+    return [];
+  }
 }
 
-async function writeBin(binId, data) {
-  await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Master-Key": JSONBIN_API_KEY
-    },
-    body: JSON.stringify(data)
-  });
+// Helper function: Save data to JSONBin
+async function saveBin(binId, data) {
+  try {
+    await axios.put(
+      `https://api.jsonbin.io/v3/b/${binId}`,
+      data,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': process.env.JSONBIN_API_KEY,
+        },
+      }
+    );
+  } catch (error) {
+    console.error('Error saving bin:', error.message);
+  }
 }
-
-// Initialize cache
-let usersData = [];
-let feedbackData = [];
-
-(async () => {
-  usersData = await readBin(USERS_BIN_ID);
-  feedbackData = await readBin(FEEDBACK_BIN_ID);
-})();
 
 // Routes
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'intro.html')));
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public', 'register.html')));
-app.get('/feedback', (req, res) => req.session.name ? res.sendFile(path.join(__dirname, 'public', 'feedback.html')) : res.redirect('/login'));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'intro.html'));
+});
 
-// Register
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
+// Register user
 app.post('/register', async (req, res) => {
   const { name, email, username, password, confirmPassword } = req.body;
-  if (!name || !email || !username || !password || !confirmPassword)
-    return res.status(400).send('All fields required');
-  if (password !== confirmPassword)
-    return res.status(400).send('Passwords do not match');
-  if (usersData.some(u => u.username === username))
-    return res.status(400).send('Username already exists');
 
-  usersData.push({ name, email, username, password });
-  await writeBin(USERS_BIN_ID, usersData);
+  if (!name || !email || !username || !password || !confirmPassword) {
+    return res.status(400).send('All fields are required');
+  }
+  if (password !== confirmPassword) {
+    return res.status(400).send('Passwords do not match');
+  }
+
+  const usersData = await loadBin(process.env.USERS_BIN_ID);
+  if (usersData.some((user) => user.username === username)) {
+    return res.status(400).send('Username already exists');
+  }
+
+  const newUser = { name, email, username, password };
+  usersData.push(newUser);
+  await saveBin(process.env.USERS_BIN_ID, usersData);
+
   res.redirect('/login');
 });
 
-// Login
-app.post('/login', (req, res) => {
+// Login user
+app.post('/login', async (req, res) => {
   const { username, password } = req.body;
-  const user = usersData.find(u => u.username === username && u.password === password);
-  if (!user) return res.status(401).send('Invalid credentials');
+
+  const usersData = await loadBin(process.env.USERS_BIN_ID);
+  const user = usersData.find(
+    (u) => u.username === username && u.password === password
+  );
+
+  if (!user) {
+    return res.status(401).send('Invalid credentials');
+  }
+
   req.session.name = user.name;
   res.redirect('/feedback');
 });
 
-// Feedback forms
+// Feedback categories page
+app.get('/feedback', (req, res) => {
+  if (!req.session.name) return res.redirect('/login');
+  res.sendFile(path.join(__dirname, 'public', 'feedback.html'));
+});
+
+// Feedback form routes
 const feedbackPages = ['restaurant', 'hotel', 'product', 'mall', 'institution'];
-feedbackPages.forEach(page => {
-  app.get(`/${page}-feedback`, (req, res) => {
+feedbackPages.forEach((type) => {
+  app.get(`/${type}-feedback`, (req, res) => {
     if (!req.session.name) return res.redirect('/login');
-    res.sendFile(path.join(__dirname, 'public', `${page}-feedback.html`));
+    res.sendFile(path.join(__dirname, 'public', `${type}-feedback.html`));
   });
 });
 
 // Submit feedback
 app.post('/submit-feedback', async (req, res) => {
   if (!req.session.name) return res.redirect('/login');
-  const feedback = { ...req.body, name: req.session.name, timestamp: new Date().toISOString() };
+
+  const feedback = req.body;
+  feedback.name = req.session.name;
+  feedback.timestamp = new Date().toISOString();
+
+  const feedbackData = await loadBin(process.env.FEEDBACK_BIN_ID);
   feedbackData.push(feedback);
-  await writeBin(FEEDBACK_BIN_ID, feedbackData);
+  await saveBin(process.env.FEEDBACK_BIN_ID, feedbackData);
+
   res.redirect('/feedback-display');
 });
 
-// Display pages
-app.get('/feedback-display', (req, res) => req.session.name ? res.sendFile(path.join(__dirname, 'public', 'feedback-display.html')) : res.redirect('/login'));
-app.get('/analytics', (req, res) => req.session.name ? res.sendFile(path.join(__dirname, 'public', 'analytics.html')) : res.redirect('/login'));
+// Feedback display page
+app.get('/feedback-display', (req, res) => {
+  if (!req.session.name) return res.redirect('/login');
+  res.sendFile(path.join(__dirname, 'public', 'feedback-display.html'));
+});
+
+// Analytics page
+app.get('/analytics', (req, res) => {
+  if (!req.session.name) return res.redirect('/login');
+  res.sendFile(path.join(__dirname, 'public', 'analytics.html'));
+});
+
+// API endpoint: Get feedback for logged-in user
+app.get('/api/feedback', async (req, res) => {
+  if (!req.session.name) return res.status(401).json({ error: 'Not logged in' });
+
+  try {
+    const response = await axios.get(
+      `https://api.jsonbin.io/v3/b/${process.env.FEEDBACK_BIN_ID}/latest`,
+      {
+        headers: {
+          'X-Master-Key': process.env.JSONBIN_API_KEY,
+        },
+      }
+    );
+
+    const allFeedback = response.data.record;
+    const userFeedback = allFeedback.filter(
+      (f) => f.name === req.session.name
+    );
+
+    res.json(userFeedback);
+  } catch (error) {
+    console.error('Error fetching feedback from JSONBin:', error.message);
+    res.status(500).json({ error: 'Failed to load feedback' });
+  }
+});
 
 // Logout
 app.get('/logout', (req, res) => {
-  req.session.destroy(() => res.redirect('/'));
+  req.session.destroy((err) => {
+    if (err) console.error('Session destroy error:', err);
+    res.redirect('/');
+  });
 });
 
-// Analytics API
-app.get('/api/analytics', (req, res) => {
-  if (!req.session.name) return res.status(401).json({ error: 'Not logged in' });
-  const analyticsData = generateAnalyticsData();
-  res.json(analyticsData);
+// Start HTTP server
+const server = app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
 
-// Helper to generate analytics
-function generateAnalyticsData() {
-  const recentFeedback = feedbackData;
-  const categories = ['Restaurant', 'Hotel', 'Product', 'Mall', 'Institution'];
-  const feedbackCounts = categories.map(cat => recentFeedback.filter(f => f.category === cat).length);
-  return { categories, feedbackCounts };
-}
-
-// Start server
-const server = app.listen(port, () => console.log(`✅ Server running on port ${port}`));
+// WebSocket server for real-time analytics
 const wss = new WebSocket.Server({ server });
 wss.on('connection', (ws) => {
-  const sendData = () => ws.send(JSON.stringify(generateAnalyticsData()));
-  sendData();
-  const interval = setInterval(sendData, 5000);
-  ws.on('close', () => clearInterval(interval));
+  console.log('WebSocket connected');
+  ws.send(JSON.stringify({ status: 'connected' }));
+
+  ws.on('close', () => console.log('WebSocket disconnected'));
 });
