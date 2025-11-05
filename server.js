@@ -8,58 +8,72 @@ const axios = require('axios');
 const app = express();
 const port = process.env.PORT || 4000;
 
-// Middleware
+// Middleware setup
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'feedback@mlrit2025',
+    secret: process.env.SESSION_SECRET || 'Arun@2006',
     resave: false,
     saveUninitialized: true,
     cookie: { secure: false },
   })
 );
 
-// Serve static files from the "public" folder
+// ✅ Serve intro page first (main homepage)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'intro.html'));
+});
+
+// ✅ Serve static assets (HTML, CSS, JS, images)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Helper function: Load data from JSONBin
+//
+// ---------------- JSONBin Helper Functions ----------------
+//
+
+// Load data from a JSONBin
 async function loadBin(binId) {
   try {
     const response = await axios.get(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
       headers: { 'X-Master-Key': process.env.JSONBIN_API_KEY },
     });
-    return response.data.record;
+    return response.data.record || [];
   } catch (error) {
     console.error('Error loading bin:', error.message);
     return [];
   }
 }
 
-// Helper function: Save data to JSONBin
+// Save data back to a JSONBin
 async function saveBin(binId, data) {
   try {
-    await axios.put(
-      `https://api.jsonbin.io/v3/b/${binId}`,
-      data,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': process.env.JSONBIN_API_KEY,
-        },
-      }
-    );
+    await axios.put(`https://api.jsonbin.io/v3/b/${binId}`, data, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': process.env.JSONBIN_API_KEY,
+      },
+    });
   } catch (error) {
     console.error('Error saving bin:', error.message);
   }
 }
 
-// Routes
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'intro.html')));
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public', 'register.html')));
+//
+// ---------------- AUTH ROUTES ----------------
+//
 
-// Register
+// Login page
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Register page
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
+// Register user
 app.post('/register', async (req, res) => {
   const { name, email, username, password, confirmPassword } = req.body;
 
@@ -69,18 +83,20 @@ app.post('/register', async (req, res) => {
     return res.status(400).send('Passwords do not match');
 
   const usersData = await loadBin(process.env.USERS_BIN_ID);
-  if (usersData.some((user) => user.username === username))
+  if (usersData.some((u) => u.username === username))
     return res.status(400).send('Username already exists');
 
-  usersData.push({ name, email, username, password });
+  const newUser = { name, email, username, password };
+  usersData.push(newUser);
   await saveBin(process.env.USERS_BIN_ID, usersData);
 
   res.redirect('/login');
 });
 
-// Login
+// Login user
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
+
   const usersData = await loadBin(process.env.USERS_BIN_ID);
   const user = usersData.find((u) => u.username === username && u.password === password);
 
@@ -90,13 +106,17 @@ app.post('/login', async (req, res) => {
   res.redirect('/feedback');
 });
 
-// Feedback category page
+//
+// ---------------- FEEDBACK ROUTES ----------------
+//
+
+// Feedback main page
 app.get('/feedback', (req, res) => {
   if (!req.session.name) return res.redirect('/login');
   res.sendFile(path.join(__dirname, 'public', 'feedback.html'));
 });
 
-// Feedback forms
+// Feedback form routes
 const feedbackPages = ['restaurant', 'hotel', 'product', 'mall', 'institution'];
 feedbackPages.forEach((type) => {
   app.get(`/${type}-feedback`, (req, res) => {
@@ -108,6 +128,7 @@ feedbackPages.forEach((type) => {
 // Submit feedback
 app.post('/submit-feedback', async (req, res) => {
   if (!req.session.name) return res.redirect('/login');
+
   const feedback = req.body;
   feedback.name = req.session.name;
   feedback.timestamp = new Date().toISOString();
@@ -119,7 +140,7 @@ app.post('/submit-feedback', async (req, res) => {
   res.redirect('/feedback-display');
 });
 
-// Display feedback
+// Feedback display page
 app.get('/feedback-display', (req, res) => {
   if (!req.session.name) return res.redirect('/login');
   res.sendFile(path.join(__dirname, 'public', 'feedback-display.html'));
@@ -131,24 +152,23 @@ app.get('/analytics', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'analytics.html'));
 });
 
-// --- NEW API: Get username for top bar ---
+//
+// ---------------- API ROUTES ----------------
+//
+
+// API: Return logged-in user name
 app.get('/api/name', (req, res) => {
   if (!req.session.name) return res.status(401).json({ error: 'Not logged in' });
   res.json({ name: req.session.name });
 });
 
-// --- API: Get feedback (for feedback-display.html) ---
+// API: Fetch user’s feedback data
 app.get('/api/feedback', async (req, res) => {
   if (!req.session.name) return res.status(401).json({ error: 'Not logged in' });
 
   try {
-    const response = await axios.get(
-      `https://api.jsonbin.io/v3/b/${process.env.FEEDBACK_BIN_ID}/latest`,
-      { headers: { 'X-Master-Key': process.env.JSONBIN_API_KEY } }
-    );
-
-    const allFeedback = response.data.record;
-    const userFeedback = allFeedback.filter(f => f.name === req.session.name);
+    const feedbackData = await loadBin(process.env.FEEDBACK_BIN_ID);
+    const userFeedback = feedbackData.filter((f) => f.name === req.session.name);
     res.json(userFeedback);
   } catch (error) {
     console.error('Error fetching feedback:', error.message);
@@ -156,57 +176,83 @@ app.get('/api/feedback', async (req, res) => {
   }
 });
 
-// --- NEW API: Analytics Data (for analytics.html) ---
+// API: Analytics data
 app.get('/api/analytics', async (req, res) => {
-  if (!req.session.name) return res.status(401).json({ error: 'Not logged in' });
-
   try {
-    const response = await axios.get(
-      `https://api.jsonbin.io/v3/b/${process.env.FEEDBACK_BIN_ID}/latest`,
-      { headers: { 'X-Master-Key': process.env.JSONBIN_API_KEY } }
-    );
-    const feedback = response.data.record;
+    const feedbackData = await loadBin(process.env.FEEDBACK_BIN_ID);
+    const categories = ['Restaurant', 'Hotel', 'Product', 'Mall', 'Institution'];
 
-    const categories = [...new Set(feedback.map(f => f.category))];
-    const feedbackCounts = categories.map(c => feedback.filter(f => f.category === c).length);
-
-    const categoryDetails = categories.map(cat => {
-      const catFeedback = feedback.filter(f => f.category === cat);
-      const avgRating = catFeedback.reduce((sum, f) =>
-        sum + ((+f['q1-rating'] + +f['q2-rating'] + +f['q3-rating'] + +f['q4-rating']) / 4), 0
-      ) / (catFeedback.length || 1);
+    const categoryDetails = categories.map((cat) => {
+      const catFeedback = feedbackData.filter((f) => f.category === cat);
+      const avgRating =
+        catFeedback.length > 0
+          ? (
+              catFeedback.reduce(
+                (sum, f) =>
+                  sum +
+                  (parseInt(f['q1-rating']) +
+                    parseInt(f['q2-rating']) +
+                    parseInt(f['q3-rating']) +
+                    parseInt(f['q4-rating'])) /
+                    4,
+                0
+              ) / catFeedback.length
+            ).toFixed(1)
+          : 0;
 
       const ratings = [0, 0, 0, 0, 0];
-      catFeedback.forEach(f => {
-        const avg = (+f['q1-rating'] + +f['q2-rating'] + +f['q3-rating'] + +f['q4-rating']) / 4;
-        const idx = Math.min(4, Math.max(0, Math.floor(avg / 2)));
-        ratings[idx]++;
+      catFeedback.forEach((f) => {
+        const avg =
+          (parseInt(f['q1-rating']) +
+            parseInt(f['q2-rating']) +
+            parseInt(f['q3-rating']) +
+            parseInt(f['q4-rating'])) /
+          4;
+        const index = Math.min(Math.floor(avg / 2), 4);
+        ratings[index]++;
       });
 
-      return { name: cat, averageRating: avgRating, ratings };
+      return { name: cat, averageRating: parseFloat(avgRating), ratings };
     });
 
-    const timeLabels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
-    const averageRatings = [3.8, 4.2, 4.5, 4.6];
+    const feedbackCounts = categoryDetails.map((c) =>
+      feedbackData.filter((f) => f.category === c.name).length
+    );
 
-    res.json({ categories, feedbackCounts, categoryDetails, timeLabels, averageRatings });
+    const response = {
+      categories,
+      feedbackCounts,
+      categoryDetails,
+      timeLabels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+      averageRatings: [3.8, 4.2, 4.5, 4.3],
+    };
+
+    res.json(response);
   } catch (error) {
-    console.error('Analytics error:', error.message);
+    console.error('Error building analytics:', error.message);
     res.status(500).json({ error: 'Failed to load analytics data' });
   }
 });
 
 // Logout
 app.get('/logout', (req, res) => {
-  req.session.destroy(() => res.redirect('/'));
+  req.session.destroy((err) => {
+    if (err) console.error('Session destroy error:', err);
+    res.redirect('/');
+  });
 });
 
-// Start HTTP + WebSocket Server
-const server = app.listen(port, () => console.log(`Server running on port ${port}`));
+//
+// ---------------- SERVER + WEBSOCKET ----------------
+//
+
+const server = app.listen(port, () => {
+  console.log(`✅ Feedback System running at http://localhost:${port}`);
+});
 
 const wss = new WebSocket.Server({ server });
 wss.on('connection', (ws) => {
-  console.log('WebSocket connected');
+  console.log('🔗 WebSocket connected');
   ws.send(JSON.stringify({ status: 'connected' }));
-  ws.on('close', () => console.log('WebSocket disconnected'));
+  ws.on('close', () => console.log('❌ WebSocket disconnected'));
 });
