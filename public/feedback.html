@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Categories</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('feedback-bg.jpg');
+            background-size: cover;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            margin: 50px auto;
+        }
+
+        .welcome-message {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .category-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .category-buttons button {
+            width: 150px;
+            height: 150px;
+            background-size: cover;
+            background-position: center;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .category-buttons button:hover {
+            transform: scale(1.1);
+        }
+
+        .action-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .action-link {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid #4CAF50;
+        }
+
+        .action-link:hover {
+            background: rgba(76, 175, 80, 0.4);
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+
+        .action-link.logout {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        .action-link.logout:hover {
+            background: rgba(220, 53, 69, 0.4);
+        }
+
+        .action-link.analytics {
+            background: rgba(67, 97, 238, 0.2);
+            color: #4361ee;
+            border-color: #4361ee;
+        }
+
+        .action-link.analytics:hover {
+            background: rgba(67, 97, 238, 0.4);
+        }
+
+        a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="welcome-message" id="welcome-message"></div>
+        <h1>Select Feedback Category</h1>
+        <div class="category-buttons">
+            <button onclick="location.href='/restaurant-feedback'"
+                style="background-image: url('restaurant-icon.jpeg');">Restaurant</button>
+            <button onclick="location.href='/hotel-feedback'"
+                style="background-image: url('hotel-icon.jpeg');">Hotel</button>
+            <button onclick="location.href='/product-feedback'"
+                style="background-image: url('product-icon.jpeg');">Product</button>
+            <button onclick="location.href='/mall-feedback'"
+                style="background-image: url('mall-icon.jpeg');">Mall</button>
+            <button onclick="location.href='/institution-feedback'"
+                style="background-image: url('institution-icon.jpeg');">Institution</button>
+        </div>
+        <div class="action-links">
+            <a href="/feedback" class="action-link">Back to Categories</a>
+            <a href="/analytics" class="action-link analytics">View Analytics</a>
+            <a href="/feedback-display" class="action-link">View Your Feedback</a>
+            <a href="/logout" class="action-link logout">Logout</a>
+        </div>
+    </div>
+
+    <script>
+        // Fetch the user's name from the backend
+        fetch('/api/name')
+            .then(response => response.json())
+            .then(data => {
+                const welcomeMessage = document.getElementById('welcome-message');
+                if (data.name) {
+                    welcomeMessage.textContent = `Welcome, ${data.name}!`;
+                }
+            })
+            .catch(error => console.error('Error fetching name:', error));
+    </script>
+</body>
+
+</html>

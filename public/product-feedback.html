@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Feedback</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('product-bg.jpg');
+            background-size: cover;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            margin: 50px auto;
+        }
+
+        input,
+        textarea,
+        select,
+        button {
+            margin: 10px;
+            padding: 10px;
+            width: 80%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .rating-scale {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+        }
+
+        .rating-scale span {
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(to right, red, yellow, green);
+            cursor: pointer;
+            color: black;
+            font-weight: bold;
+        }
+
+        .rating-scale span:hover {
+            transform: scale(1.2);
+        }
+
+        a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Product Feedback</h1>
+        <form action="/submit-feedback" method="POST">
+            <input type="text" name="name" placeholder="Your Name" required><br>
+            <input type="email" name="email" placeholder="Your Email" required><br>
+            <input type="hidden" name="category" value="Product">
+
+            <!-- Question 1 -->
+            <label for="q1">1. How was the product quality?</label>
+            <div class="rating-scale" id="q1-scale">
+                <span data-value="1">1</span>
+                <span data-value="2">2</span>
+                <span data-value="3">3</span>
+                <span data-value="4">4</span>
+                <span data-value="5">5</span>
+                <span data-value="6">6</span>
+                <span data-value="7">7</span>
+                <span data-value="8">8</span>
+                <span data-value="9">9</span>
+                <span data-value="10">10</span>
+            </div>
+            <input type="hidden" id="q1-rating" name="q1-rating" required><br>
+
+            <!-- Question 2 -->
+            <label for="q2">2. How was the packaging?</label>
+            <div class="rating-scale" id="q2-scale">
+                <span data-value="1">1</span>
+                <span data-value="2">2</span>
+                <span data-value="3">3</span>
+                <span data-value="4">4</span>
+                <span data-value="5">5</span>
+                <span data-value="6">6</span>
+                <span data-value="7">7</span>
+                <span data-value="8">8</span>
+                <span data-value="9">9</span>
+                <span data-value="10">10</span>
+            </div>
+            <input type="hidden" id="q2-rating" name="q2-rating" required><br>
+
+            <!-- Question 3 -->
+            <label for="q3">3. How was the delivery speed?</label>
+            <div class="rating-scale" id="q3-scale">
+                <span data-value="1">1</span>
+                <span data-value="2">2</span>
+                <span data-value="3">3</span>
+                <span data-value="4">4</span>
+                <span data-value="5">5</span>
+                <span data-value="6">6</span>
+                <span data-value="7">7</span>
+                <span data-value="8">8</span>
+                <span data-value="9">9</span>
+                <span data-value="10">10</span>
+            </div>
+            <input type="hidden" id="q3-rating" name="q3-rating" required><br>
+
+            <!-- Question 4 -->
+            <label for="q4">4. How was the overall experience?</label>
+            <div class="rating-scale" id="q4-scale">
+                <span data-value="1">1</span>
+                <span data-value="2">2</span>
+                <span data-value="3">3</span>
+                <span data-value="4">4</span>
+                <span data-value="5">5</span>
+                <span data-value="6">6</span>
+                <span data-value="7">7</span>
+                <span data-value="8">8</span>
+                <span data-value="9">9</span>
+                <span data-value="10">10</span>
+            </div>
+            <input type="hidden" id="q4-rating" name="q4-rating" required><br>
+
+            <textarea name="comments" placeholder="Your Comments" required></textarea><br>
+            <button type="submit">Submit Feedback</button>
+        </form>
+        <a href="/feedback">Go back to categories</a>
+    </div>
+
+    <script>
+        // Handle rating selection
+        function handleRatingSelection(scaleId, inputId) {
+            const scale = document.getElementById(scaleId);
+            const input = document.getElementById(inputId);
+            scale.querySelectorAll('span').forEach(span => {
+                span.addEventListener('click', () => {
+                    scale.querySelectorAll('span').forEach(s => s.classList.remove('active'));
+                    span.classList.add('active');
+                    input.value = span.getAttribute('data-value');
+                });
+            });
+        }
+
+        // Initialize rating scales
+        handleRatingSelection('q1-scale', 'q1-rating');
+        handleRatingSelection('q2-scale', 'q2-rating');
+        handleRatingSelection('q3-scale', 'q3-rating');
+        handleRatingSelection('q4-scale', 'q4-rating');
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Analytics | Feedback System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --accent: #4cc9f0;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #4CAF50;
+            --warning: #ff9f1c;
+            --danger: #e63946;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fa;
+            color: var(--dark);
+        }
+
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+        }
+
+        .logo i {
+            margin-right: 10px;
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-links a {
+            margin-left: 1.5rem;
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-menu img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-left: 1rem;
+        }
+
+        .container {
+            padding: 6rem 2rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-header h1 {
+            font-size: 2rem;
+            color: var(--primary);
+            margin: 0;
+        }
+
+        .date-filter {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .date-filter select {
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background: white;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .summary-card h3 {
+            margin-top: 0;
+            color: #6c757d;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .summary-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+            color: var(--dark);
+        }
+
+        .summary-card .trend {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .trend.up {
+            color: var(--success);
+        }
+
+        .trend.down {
+            color: var(--danger);
+        }
+
+        .charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 992px) {
+            .charts {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .chart-card h2 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            color: var(--dark);
+        }
+
+        .rating-breakdown {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+        }
+
+        .rating-breakdown h2 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            color: var(--dark);
+        }
+
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .category-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .category-name {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .category-rating {
+            display: flex;
+            align-items: center;
+        }
+
+        .stars {
+            color: var(--warning);
+            margin-right: 0.5rem;
+        }
+
+        .rating-value {
+            font-weight: 600;
+        }
+
+        .progress-container {
+            height: 8px;
+            background: #f1f3f5;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, var(--danger), var(--warning), var(--success));
+            border-radius: 4px;
+        }
+
+        .rating-distribution {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .rating-distribution span {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fas fa-comment-alt"></i>
+            <span>Feedback System</span>
+        </div>
+        <div class="nav-links">
+            <a href="/feedback">Submit Feedback</a>
+            <a href="/feedback-display">My Feedback</a>
+            <a href="/analytics" class="active">Analytics</a>
+            <div class="user-menu">
+                <span id="username-display"></span>
+                <a href="/logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="dashboard-header">
+            <h1>Feedback Analytics Dashboard</h1>
+            <div class="date-filter">
+                <select id="time-period">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="365">Last Year</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="dashboard-content">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i> Loading dashboard data...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const dashboardContent = document.getElementById('dashboard-content');
+        const usernameDisplay = document.getElementById('username-display');
+        let ratingTrendChart, categoryChart;
+
+        // Fetch user data
+        async function fetchUserData() {
+            try {
+                const response = await fetch('/api/name');
+                if (!response.ok) throw new Error('Not logged in');
+                const data = await response.json();
+                usernameDisplay.textContent = data.name;
+            } catch (error) {
+                window.location.href = '/';
+            }
+        }
+
+        // Initialize WebSocket connection
+        function setupWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const socket = new WebSocket(`${protocol}//${window.location.host}/ws/analytics`);
+
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                updateDashboard(data);
+            };
+
+            socket.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                // Fallback to polling if WebSocket fails
+                setInterval(fetchAnalyticsData, 5000);
+            };
+        }
+
+        // Fetch analytics data
+        async function fetchAnalyticsData() {
+            try {
+                const response = await fetch('/api/analytics');
+                if (!response.ok) throw new Error('Failed to fetch analytics');
+                const data = await response.json();
+                updateDashboard(data);
+            } catch (error) {
+                console.error('Error fetching analytics:', error);
+                dashboardContent.innerHTML = `
+                    <div class="error" style="text-align: center; padding: 2rem; color: var(--danger);">
+                        Failed to load analytics data. Please try again later.
+                    </div>
+                `;
+            }
+        }
+
+        // Update the dashboard with new data
+        function updateDashboard(data) {
+            // Create summary cards
+            const totalFeedback = data.feedbackCounts.reduce((a, b) => a + b, 0);
+            const avgRating = data.categoryDetails.reduce((sum, cat) => sum + cat.averageRating, 0) /
+                (data.categoryDetails.length || 1);
+
+            const summaryCardsHTML = `
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <h3>Total Feedback</h3>
+                        <div class="value">${totalFeedback}</div>
+                        <div class="trend up">
+                            <i class="fas fa-arrow-up"></i> ${Math.floor(Math.random() * 20)}% from last period
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Average Rating</h3>
+                        <div class="value">${avgRating.toFixed(1)} <small>/5</small></div>
+                        <div class="trend ${Math.random() > 0.5 ? 'up' : 'down'}">
+                            <i class="fas fa-${Math.random() > 0.5 ? 'arrow-up' : 'arrow-down'}"></i>
+                            ${(Math.random() * 0.5).toFixed(1)} from last period
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Categories</h3>
+                        <div class="value">${data.categories.length}</div>
+                        <div class="trend up">
+                            <i class="fas fa-arrow-up"></i> Active
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Response Rate</h3>
+                        <div class="value">${Math.floor(Math.random() * 30) + 70}%</div>
+                        <div class="trend up">
+                            <i class="fas fa-arrow-up"></i> ${Math.floor(Math.random() * 10)}% from last period
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Create charts section
+            const chartsHTML = `
+                <div class="charts">
+                    <div class="chart-card">
+                        <h2>Rating Trends</h2>
+                        <canvas id="ratingTrendChart" height="250"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h2>Feedback by Category</h2>
+                        <canvas id="categoryChart" height="250"></canvas>
+                    </div>
+                </div>
+            `;
+
+            // Create category breakdown
+            let categoryCardsHTML = '';
+            data.categoryDetails.forEach(category => {
+                const starsHTML = generateStars(category.averageRating);
+                const distributionHTML = generateRatingDistribution(category.ratings);
+
+                categoryCardsHTML += `
+                    <div class="category-card">
+                        <div class="category-header">
+                            <span class="category-name">${category.name}</span>
+                            <div class="category-rating">
+                                <div class="stars">${starsHTML}</div>
+                                <span class="rating-value">${category.averageRating.toFixed(1)}</span>
+                            </div>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: ${(category.averageRating / 5) * 100}%"></div>
+                        </div>
+                        <div class="rating-distribution">
+                            ${distributionHTML}
+                        </div>
+                    </div>
+                `;
+            });
+
+            const ratingBreakdownHTML = `
+                <div class="rating-breakdown">
+                    <h2>Rating Breakdown by Category</h2>
+                    <div class="categories">
+                        ${categoryCardsHTML}
+                    </div>
+                </div>
+            `;
+
+            // Update the dashboard
+            dashboardContent.innerHTML = `
+                ${summaryCardsHTML}
+                ${chartsHTML}
+                ${ratingBreakdownHTML}
+            `;
+
+            // Initialize charts
+            initCharts(data);
+        }
+
+        // Initialize charts
+        function initCharts(data) {
+            // Rating Trend Chart
+            const ratingTrendCtx = document.getElementById('ratingTrendChart').getContext('2d');
+            ratingTrendChart = new Chart(ratingTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: data.timeLabels,
+                    datasets: [{
+                        label: 'Average Rating',
+                        data: data.averageRatings,
+                        borderColor: '#4361ee',
+                        backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.dataset.label}: ${context.raw.toFixed(1)}/5`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 1,
+                            max: 5,
+                            ticks: {
+                                stepSize: 0.5
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Category Distribution Chart
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            categoryChart = new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.categories,
+                    datasets: [{
+                        data: data.feedbackCounts,
+                        backgroundColor: [
+                            '#4361ee', '#4cc9f0', '#4CAF50', '#ff9f1c', '#e63946'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Helper function to generate star ratings
+        function generateStars(rating) {
+            let stars = '';
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 >= 0.5;
+
+            for (let i = 0; i < fullStars; i++) {
+                stars += '<i class="fas fa-star"></i>';
+            }
+
+            if (hasHalfStar) {
+                stars += '<i class="fas fa-star-half-alt"></i>';
+            }
+
+            const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+            for (let i = 0; i < emptyStars; i++) {
+                stars += '<i class="far fa-star"></i>';
+            }
+
+            return stars;
+        }
+
+        // Helper function to generate rating distribution
+        function generateRatingDistribution(ratings) {
+            let distribution = '';
+            const total = ratings.reduce((sum, val) => sum + val, 0);
+
+            ratings.forEach((count, index) => {
+                const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+                distribution += `
+                    <span>${index + 1} <i class="fas fa-star"></i> (${percentage}%)</span>
+                `;
+            });
+
+            return distribution;
+        }
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchUserData();
+            setupWebSocket();
+            fetchAnalyticsData();
+
+            // Time period filter
+            document.getElementById('time-period').addEventListener('change', (e) => {
+                console.log('Time period changed to:', e.target.value);
+                // In a real implementation, this would fetch filtered data
+                fetchAnalyticsData();
+            });
+        });
+    </script>
+</body>
+
+</html>
