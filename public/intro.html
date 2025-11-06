@@ -2,336 +2,212 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Feedback System | Empower Your Voice</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback System | Empower Your Voice</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-    <style>
-        :root {
-            --primary: #3a0ca3;
-            --accent: #4cc9f0;
-            --secondary: #4361ee;
-            --dark: #0b132b;
-            --light: #f8f9fa;
-            --gradient: linear-gradient(135deg, #4cc9f0, #4361ee);
-        }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: radial-gradient(circle at top left, #1b263b, #0d1b2a 70%);
+      color: #fff;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            scroll-behavior: smooth;
-        }
+    header {
+      width: 100%;
+      padding: 20px 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(12px);
+      z-index: 10;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(to bottom right, #0b132b, #1c2541);
-            color: var(--light);
-            overflow-x: hidden;
-        }
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #4cc9f0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-        /* Navbar */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 60px;
-            position: fixed;
-            width: 100%;
-            background: rgba(10, 15, 30, 0.6);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            z-index: 1000;
-        }
+    nav a {
+      color: #ddd;
+      text-decoration: none;
+      margin: 0 15px;
+      transition: 0.3s;
+      font-weight: 500;
+    }
 
-        .logo {
-            font-size: 1.6rem;
-            font-weight: 600;
-            color: var(--accent);
-            display: flex;
-            align-items: center;
-        }
+    nav a:hover {
+      color: #4cc9f0;
+    }
 
-        .logo i {
-            margin-right: 10px;
-        }
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 120px 80px;
+      gap: 60px;
+    }
 
-        nav a {
-            color: #e0e0e0;
-            margin-left: 25px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: 0.3s;
-        }
+    .content {
+      flex: 1;
+      animation: fadeIn 1.2s ease-in-out;
+    }
 
-        nav a:hover {
-            color: var(--accent);
-        }
+    .content h1 {
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: #4cc9f0;
+      text-shadow: 0 0 20px rgba(76, 201, 240, 0.7);
+      margin-bottom: 20px;
+    }
 
-        /* Hero Section */
-        .hero {
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            padding: 0 70px;
-            background: radial-gradient(circle at 20% 30%, #182341, #0b132b);
-        }
+    .content h1 span {
+      color: #ffffff;
+    }
 
-        .hero-text {
-            max-width: 580px;
-            animation: fadeIn 1.4s ease;
-        }
+    .content p {
+      font-size: 1.1rem;
+      color: #cfd8e3;
+      margin-bottom: 30px;
+      line-height: 1.6;
+      max-width: 500px;
+    }
 
-        .hero-text h1 {
-            font-size: 3.2rem;
-            color: #4cc9f0;
-            text-shadow: 0 0 15px rgba(76, 201, 240, 0.6);
-            margin-bottom: 15px;
-        }
+    .btn {
+      display: inline-block;
+      padding: 14px 30px;
+      background: linear-gradient(90deg, #4361ee, #4cc9f0);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 600;
+      transition: 0.3s;
+      box-shadow: 0 0 15px rgba(67, 97, 238, 0.4);
+    }
 
-        .hero-text p {
-            color: #d4d4d4;
-            font-size: 1.1rem;
-            line-height: 1.7;
-            margin-bottom: 40px;
-        }
+    .btn:hover {
+      transform: scale(1.05);
+      background: linear-gradient(90deg, #4cc9f0, #4361ee);
+    }
 
-        .hero button {
-            background: var(--gradient);
-            border: none;
-            padding: 14px 36px;
-            border-radius: 50px;
-            color: white;
-            font-weight: 600;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: 0.4s;
-            box-shadow: 0 0 20px rgba(76, 201, 240, 0.6);
-        }
+    .illustration {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      animation: fadeInRight 1.5s ease-in-out;
+    }
 
-        .hero button:hover {
-            transform: scale(1.08);
-            box-shadow: 0 0 30px rgba(76, 201, 240, 0.9);
-        }
+    .illustration img {
+      width: 90%;
+      max-width: 480px;
+      filter: drop-shadow(0 0 20px rgba(76, 201, 240, 0.3));
+    }
 
-        .hero img {
-            width: 460px;
-            animation: float 6s ease-in-out infinite;
-            filter: drop-shadow(0 0 25px rgba(76, 201, 240, 0.5));
-            border-radius: 15px;
-        }
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #aaa;
+      font-size: 0.9rem;
+      background: rgba(0, 0, 0, 0.3);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-        @keyframes float {
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
 
-            0%,
-            100% {
-                transform: translateY(0);
-            }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-            50% {
-                transform: translateY(-20px);
-            }
-        }
+    @keyframes fadeInRight {
+      from {
+        opacity: 0;
+        transform: translateX(50px);
+      }
 
-        /* Info Section */
-        section {
-            padding: 100px 60px;
-            text-align: center;
-        }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
 
-        section h2 {
-            color: var(--accent);
-            font-size: 2.2rem;
-            margin-bottom: 20px;
-        }
+    @media (max-width: 992px) {
+      main {
+        flex-direction: column;
+        padding: 120px 30px;
+        text-align: center;
+      }
 
-        section p {
-            color: #bbb;
-            font-size: 1.05rem;
-            line-height: 1.8;
-            max-width: 850px;
-            margin: auto;
-        }
+      .illustration img {
+        width: 70%;
+      }
 
-        /* Cards */
-        .cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 25px;
-            margin-top: 50px;
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.07);
-            padding: 30px 20px;
-            border-radius: 15px;
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
-            transition: 0.4s;
-        }
-
-        .card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 0 30px rgba(76, 201, 240, 0.6);
-        }
-
-        .card i {
-            font-size: 2.3rem;
-            color: var(--accent);
-            margin-bottom: 15px;
-        }
-
-        .card h3 {
-            color: #fff;
-            margin-bottom: 10px;
-        }
-
-        .card p {
-            color: #ccc;
-            font-size: 0.95rem;
-        }
-
-        /* CTA */
-        .cta {
-            padding: 80px 50px;
-            text-align: center;
-            background: linear-gradient(135deg, #3a0ca3, #4cc9f0);
-            color: white;
-        }
-
-        .cta h2 {
-            font-size: 2.2rem;
-            margin-bottom: 20px;
-        }
-
-        .cta button {
-            background: white;
-            color: #3a0ca3;
-            border: none;
-            padding: 14px 30px;
-            border-radius: 40px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .cta button:hover {
-            background: #4cc9f0;
-            color: white;
-            transform: scale(1.08);
-        }
-
-        /* Footer */
-        footer {
-            text-align: center;
-            padding: 25px;
-            background: rgba(255, 255, 255, 0.05);
-            color: #aaa;
-            font-size: 0.9rem;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(40px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .hero {
-                flex-direction: column;
-                text-align: center;
-                padding: 20px;
-            }
-
-            .hero img {
-                width: 90%;
-                margin-top: 30px;
-            }
-
-            header {
-                padding: 15px 25px;
-            }
-        }
-    </style>
+      .content h1 {
+        font-size: 2.3rem;
+      }
+    }
+  </style>
 </head>
 
 <body>
-    <header>
-        <div class="logo"><i class="fas fa-comments"></i> Feedback System</div>
-        <nav>
-            <a href="#home">Home</a>
-            <a href="#about">About</a>
-            <a href="#features">Features</a>
-            <a href="/login">Login</a>
-        </nav>
-    </header>
+  <header>
+    <div class="logo">
+      <i class="fas fa-comment-dots"></i> Feedback System
+    </div>
+    <nav>
+      <a href="#home">Home</a>
+      <a href="#about">About</a>
+      <a href="#how">How It Works</a>
+      <a href="index.html">Login</a>
+    </nav>
+  </header>
 
-    <section class="hero" id="home">
-        <div class="hero-text">
-            <h1>Empower Your Voice. <br /> Shape the Future.</h1>
-            <p>Welcome to the Feedback System — a platform designed to collect your opinions, analyze insights, and
-                improve experiences that matter.
-                Your voice drives innovation, and every response helps us grow together.</p>
-            <button onclick="window.location.href='/login'">Get Started →</button>
-        </div>
+  <main>
+    <div class="content">
+      <h1>Empower <span>Your Voice.</span><br>Shape the Future.</h1>
+      <p>
+        Welcome to the Feedback System — a platform designed to collect your opinions,
+        analyze insights, and improve experiences that matter most.
+        Your voice drives innovation, and every response helps us grow together.
+      </p>
+      <a href="index.html" class="btn">Get Started →</a>
+    </div>
 
-        <img src="feedback-bg.jpg" alt="Feedback Illustration" />
-    </section>
+    <div class="illustration">
+      <img src="feedback-bg.jpg" alt="Feedback Illustration">
+    </div>
+  </main>
 
-    <section id="about">
-        <h2>About the Feedback System</h2>
-        <p>Our Feedback System is a smart platform designed to collect user opinions across various categories — from
-            restaurants and hotels to institutions and products.
-            It provides an easy way for users to share experiences and helps organizations analyze real-time insights to
-            make better decisions.</p>
-    </section>
-
-    <section id="features">
-        <h2>How It Works</h2>
-        <div class="cards">
-            <div class="card">
-                <i class="fas fa-user-lock"></i>
-                <h3>Login</h3>
-                <p>Use your registered credentials to securely log in and access your feedback categories.</p>
-            </div>
-
-            <div class="card">
-                <i class="fas fa-list"></i>
-                <h3>Choose Category</h3>
-                <p>Select where you'd like to give feedback — restaurant, product, hotel, or institution.</p>
-            </div>
-
-            <div class="card">
-                <i class="fas fa-pen-nib"></i>
-                <h3>Submit Feedback</h3>
-                <p>Provide your honest ratings and comments. Your input is securely saved and analyzed.</p>
-            </div>
-
-            <div class="card">
-                <i class="fas fa-chart-pie"></i>
-                <h3>View Insights</h3>
-                <p>Visualize trends and averages using powerful analytics to see how feedback drives growth.</p>
-            </div>
-        </div>
-    </section>
-
-    <section class="cta">
-        <h2>Ready to Start?</h2>
-        <p>Click below to log in and make your opinion count!</p>
-        <button onclick="window.location.href='/login'">Get Started</button>
-    </section>
-
-    <footer>© 2025 Feedback System | Designed by Arun</footer>
+  <footer>© 2025 Feedback System | Designed by U ARUN</footer>
 </body>
 
 </html>
