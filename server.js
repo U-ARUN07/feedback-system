@@ -1,7 +1,3 @@
-// ============================
-// Feedback System (Full Server)
-// ============================
-
 const express = require("express");
 const bodyParser = require("body-parser");
 const session = require("express-session");
@@ -12,66 +8,45 @@ const WebSocket = require("ws");
 const app = express();
 const port = process.env.PORT || 4000;
 
-// ------------------------------
-// Middleware & Session Setup
-// ------------------------------
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   session({
-    secret: "Arun@2006", // ✅ your session key
+    secret: "Arun@2006",
     resave: false,
     saveUninitialized: true,
     cookie: { secure: false },
   })
 );
-
-// Serve static files (HTML, CSS, JS, Images)
 app.use(express.static(path.join(__dirname, "public")));
 
-// ------------------------------
-// File Paths & Load Data
-// ------------------------------
 const usersFilePath = path.join(__dirname, "users.json");
 const feedbackFilePath = path.join(__dirname, "feedback.json");
 
-let usersData = [];
-let feedbackData = [];
+let usersData = fs.existsSync(usersFilePath)
+  ? JSON.parse(fs.readFileSync(usersFilePath, "utf8"))
+  : [];
+let feedbackData = fs.existsSync(feedbackFilePath)
+  ? JSON.parse(fs.readFileSync(feedbackFilePath, "utf8"))
+  : [];
 
-if (fs.existsSync(usersFilePath)) {
-  usersData = JSON.parse(fs.readFileSync(usersFilePath, "utf8"));
-}
-if (fs.existsSync(feedbackFilePath)) {
-  feedbackData = JSON.parse(fs.readFileSync(feedbackFilePath, "utf8"));
-}
-
-// ------------------------------
-// Intro Page (Landing Page)
-// ------------------------------
+// ✅ Redirect base URL to intro.html
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "intro.html"));
 });
 
-// ------------------------------
-// Authentication Routes
-// ------------------------------
-
-// ✅ Register
+// ✅ Registration
 app.post("/api/register", (req, res) => {
   const { name, email, username, password } = req.body;
-
-  if (!name || !email || !username || !password) {
+  if (!name || !email || !username || !password)
     return res.status(400).json({ message: "All fields are required" });
-  }
 
-  if (usersData.some((u) => u.username === username)) {
+  if (usersData.some((u) => u.username === username))
     return res.status(400).json({ message: "Username already exists" });
-  }
 
   usersData.push({ name, email, username, password });
   fs.writeFileSync(usersFilePath, JSON.stringify(usersData, null, 2));
-
-  res.json({ message: "User registered successfully" });
+  res.json({ message: "Registered successfully!" });
 });
 
 // ✅ Login
@@ -81,192 +56,144 @@ app.post("/api/login", (req, res) => {
     (u) => u.username === username && u.password === password
   );
 
-  if (!user) {
-    return res.status(401).json({ message: "Invalid username or password" });
-  }
+  if (!user) return res.status(401).json({ message: "Invalid credentials" });
 
   req.session.user = { name: user.name, username: user.username };
-  res.json({ message: "Login successful", name: user.name });
+  res.json({ message: `Welcome ${user.name}!`, name: user.name });
 });
 
-// ✅ Logout
+// ✅ Logout with custom message
 app.get("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) console.error("Error destroying session:", err);
-    res.redirect("/");
+  const name = req.session.user?.name || "User";
+  req.session.destroy(() => {
+    res.send(`
+      <html>
+      <head>
+        <meta http-equiv="refresh" content="2;url=/" />
+        <style>
+          body {
+            background: #0d1b2a;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Poppins', sans-serif;
+          }
+        </style>
+      </head>
+      <body>
+        <h2>👋 Visit again soon, ${name}!</h2>
+      </body>
+      </html>
+    `);
   });
 });
 
-// ✅ Get Logged-in User Info
+// ✅ API for logged user
 app.get("/api/name", (req, res) => {
-  if (req.session.user) {
-    res.json({ name: req.session.user.name });
-  } else {
-    res.status(401).json({ error: "Not logged in" });
-  }
+  if (!req.session.user)
+    return res.status(401).json({ error: "Not logged in" });
+  res.json({ name: req.session.user.name });
 });
 
-// ------------------------------
-// Feedback Routes
-// ------------------------------
+// ✅ Feedback category pages
+const categories = ["restaurant", "hotel", "mall", "institution", "product"];
+categories.forEach((cat) => {
+  app.get(`/${cat}-feedback`, (req, res) => {
+    if (!req.session.user) return res.redirect("/index.html");
+    res.sendFile(path.join(__dirname, "public", `${cat}-feedback.html`));
+  });
+});
 
-// ✅ Category Page (Feedback Selection)
-app.get("/feedback", (req, res) => {
+// ✅ Feedback display route
+app.get("/feedback-display", (req, res) => {
   if (!req.session.user) return res.redirect("/index.html");
-  res.sendFile(path.join(__dirname, "public", "feedback.html"));
+  res.sendFile(path.join(__dirname, "public", "feedback-display.html"));
 });
 
-// ✅ Submit Feedback
+// ✅ Submit feedback
 app.post("/submit-feedback", (req, res) => {
   if (!req.session.user) return res.status(401).send("Not logged in");
 
   const feedback = req.body;
   feedback.name = req.session.user.name;
   feedback.timestamp = new Date().toISOString();
-
   feedbackData.push(feedback);
+
   fs.writeFileSync(feedbackFilePath, JSON.stringify(feedbackData, null, 2));
-
-  res.json({ message: "Feedback submitted successfully" });
+  res.json({ message: "Feedback submitted successfully!" });
 });
 
-// ✅ Fetch User Feedbacks
+// ✅ Get all feedback for display
 app.get("/api/feedback", (req, res) => {
-  if (!req.session.user) return res.status(401).json({ error: "Not logged in" });
-
-  const userFeedback = feedbackData.filter(
-    (f) => f.name === req.session.user.name
-  );
-  res.json(userFeedback);
+  if (!req.session.user)
+    return res.status(401).json({ error: "Not logged in" });
+  res.json(feedbackData);
 });
 
-// ------------------------------
-// Analytics Routes
-// ------------------------------
+// ✅ Analytics page
 app.get("/analytics", (req, res) => {
   if (!req.session.user) return res.redirect("/index.html");
   res.sendFile(path.join(__dirname, "public", "analytics.html"));
 });
 
-// ✅ API for Analytics Data
+// ✅ Analytics API
 app.get("/api/analytics", (req, res) => {
-  if (!req.session.user)
-    return res.status(401).json({ error: "Not logged in" });
-
-  const analyticsData = generateAnalyticsData();
-  res.json(analyticsData);
+  res.json(generateAnalyticsData());
 });
 
-// ------------------------------
-// Helper Functions
-// ------------------------------
+// Function: Generate Analytics Data
 function generateAnalyticsData() {
-  const days = 30;
-  const now = new Date();
-  const thirtyDaysAgo = new Date(now);
-  thirtyDaysAgo.setDate(now.getDate() - days);
-
-  const recentFeedback = feedbackData.filter(
-    (f) => new Date(f.timestamp) >= thirtyDaysAgo
+  const cats = ["Restaurant", "Hotel", "Mall", "Institution", "Product"];
+  const feedbackCounts = cats.map(
+    (c) => feedbackData.filter((f) => f.category === c).length
   );
 
-  const categories = ["Restaurant", "Hotel", "Product", "Mall", "Institution"];
-  const feedbackCounts = categories.map(
-    (cat) => recentFeedback.filter((f) => f.category === cat).length
-  );
-
-  const timeLabels = [];
-  const averageRatings = [];
-
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    timeLabels.push(
-      date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
-    );
-
-    const dayFeedback = recentFeedback.filter(
-      (f) => new Date(f.timestamp).toDateString() === date.toDateString()
-    );
-
-    if (dayFeedback.length > 0) {
-      const avg =
-        dayFeedback.reduce((sum, f) => {
-          const total =
-            (parseInt(f["q1-rating"]) || 0) +
-            (parseInt(f["q2-rating"]) || 0) +
-            (parseInt(f["q3-rating"]) || 0) +
-            (parseInt(f["q4-rating"]) || 0);
-          return sum + total / 4;
-        }, 0) / dayFeedback.length;
-      averageRatings.push(avg.toFixed(2));
-    } else {
-      averageRatings.push(0);
-    }
-  }
-
-  const categoryDetails = categories.map((cat) => {
-    const catFeedback = recentFeedback.filter((f) => f.category === cat);
+  const categoryDetails = cats.map((c) => {
+    const catFeedback = feedbackData.filter((f) => f.category === c);
     if (catFeedback.length === 0)
-      return { name: cat, averageRating: 0, ratings: [0, 0, 0, 0, 0] };
+      return { name: c, averageRating: 0, ratings: [0, 0, 0, 0, 0] };
 
-    const total = catFeedback.reduce((sum, f) => {
-      const avg =
-        ((parseInt(f["q1-rating"]) || 0) +
-          (parseInt(f["q2-rating"]) || 0) +
-          (parseInt(f["q3-rating"]) || 0) +
-          (parseInt(f["q4-rating"]) || 0)) /
-        4;
-      return sum + avg;
-    }, 0);
+    const avg =
+      catFeedback.reduce((sum, f) => {
+        const total =
+          (parseInt(f["q1-rating"]) +
+            parseInt(f["q2-rating"]) +
+            parseInt(f["q3-rating"]) +
+            parseInt(f["q4-rating"])) /
+          4;
+        return sum + total;
+      }, 0) / catFeedback.length;
 
-    const averageRating = total / catFeedback.length;
     const ratings = [0, 0, 0, 0, 0];
     catFeedback.forEach((f) => {
-      const avg =
-        ((parseInt(f["q1-rating"]) || 0) +
-          (parseInt(f["q2-rating"]) || 0) +
-          (parseInt(f["q3-rating"]) || 0) +
-          (parseInt(f["q4-rating"]) || 0)) /
+      const total =
+        (parseInt(f["q1-rating"]) +
+          parseInt(f["q2-rating"]) +
+          parseInt(f["q3-rating"]) +
+          parseInt(f["q4-rating"])) /
         4;
-      const rounded = Math.round(avg);
-      if (rounded >= 1 && rounded <= 5) ratings[rounded - 1]++;
+      const rounded = Math.min(5, Math.max(1, Math.round(total / 2))); // fix normalization
+      ratings[rounded - 1]++;
     });
 
-    return { name: cat, averageRating, ratings };
+    return { name: c, averageRating: avg / 2, ratings };
   });
 
   return {
-    categories,
+    categories: cats,
     feedbackCounts,
-    timeLabels,
-    averageRatings,
     categoryDetails,
   };
 }
 
-// ------------------------------
-// WebSocket for Real-time Analytics
-// ------------------------------
+// ✅ Start WebSocket for live analytics
 const server = app.listen(port, () => {
-  console.log(`🚀 Server running at http://localhost:${port}`);
+  console.log(`🚀 Running on http://localhost:${port}`);
 });
 
 const wss = new WebSocket.Server({ server, path: "/ws/analytics" });
-
 wss.on("connection", (ws) => {
-  console.log("📊 New WebSocket connection (Analytics)");
-
-  const sendAnalytics = () => {
-    const analyticsData = generateAnalyticsData();
-    ws.send(JSON.stringify(analyticsData));
-  };
-
-  sendAnalytics();
-  const interval = setInterval(sendAnalytics, 10000); // update every 10s
-
-  ws.on("close", () => {
-    clearInterval(interval);
-    console.log("❌ Analytics WebSocket closed");
-  });
+  ws.send(JSON.stringify(generateAnalyticsData()));
 });
