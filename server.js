@@ -1,9 +1,11 @@
-// server.js — Final Feedback System Server
+// ✅ Feedback System Server.js (Final Version)
+// Developed for: U ARUN
+
 import express from "express";
-import path from "path";
 import bodyParser from "body-parser";
-import fetch from "node-fetch";
 import session from "express-session";
+import path from "path";
+import fetch from "node-fetch";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 dotenv.config();
@@ -11,11 +13,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// Path Setup
+// Path setup
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Middleware
+// Middleware setup
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(
@@ -25,65 +27,48 @@ app.use(
     saveUninitialized: false,
   })
 );
-// ✅ Root route → Intro page
+
+// ======================================================
+// 🏠 DEFAULT PAGE (Intro)
+// ======================================================
 app.get("/", (req, res) => {
-  const introPath = path.join(__dirname, "public", "intro.html");
-  res.sendFile(introPath);
+  res.sendFile(path.join(__dirname, "public", "intro.html"));
 });
 
-// ✅ Redirect safeguard
 app.get("/intro", (req, res) => {
   res.redirect("/");
 });
 
-// ✅ Protect Feedback & Analytics Routes
-function ensureLogin(req, res, next) {
-  if (req.session.user) next();
-  else res.redirect("/index.html");
-}
+// ======================================================
+// 🔒 AUTHENTICATION HANDLERS
+// ======================================================
 
-// ✅ Serve Feedback Category Page
-app.get("/feedback", ensureLogin, (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "feedback.html"));
-});
+const JSONBIN_API_KEY = process.env.JSONBIN_API_KEY;
+const JSONBIN_URL = "https://api.jsonbin.io/v3/b/";
+const USER_BIN_ID = process.env.USER_BIN_ID;
+const FEEDBACK_BIN_ID = process.env.FEEDBACK_BIN_ID;
 
-// ✅ Serve Analytics Page
-app.get("/analytics", ensureLogin, (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "analytics.html"));
-});
-
-// ✅ Serve Feedback Display Page
-app.get("/feedback-display", ensureLogin, (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "feedback-display.html"));
-});
-
-// ===================================================
-//  🔹 AUTHENTICATION ROUTES
-// ===================================================
-const JSONBIN_URL = "https://api.jsonbin.io/v3/b/"; // change to your bin
-const JSONBIN_API_KEY = process.env.JSONBIN_API_KEY || "";
-
-// ✅ Register user
+// ✅ Register new user
 app.post("/api/register", async (req, res) => {
-  const { name, email, username, password } = req.body;
-  if (!name || !email || !username || !password)
-    return res.status(400).json({ message: "Missing required fields." });
+  const { fullname, email, username, password } = req.body;
+
+  if (!fullname || !email || !username || !password)
+    return res.status(400).json({ message: "All fields are required." });
 
   try {
-    // Fetch existing users from JSONBin
-    const getRes = await fetch(`${JSONBIN_URL}${process.env.USER_BIN_ID}/latest`, {
+    const response = await fetch(`${JSONBIN_URL}${USER_BIN_ID}/latest`, {
       headers: { "X-Master-Key": JSONBIN_API_KEY },
     });
-    const data = await getRes.json();
+    const data = await response.json();
     const users = data.record || [];
 
     if (users.find((u) => u.username === username)) {
-      return res.status(409).json({ message: "Username already exists." });
+      return res.status(400).json({ message: "Username already exists." });
     }
 
-    users.push({ name, email, username, password });
+    users.push({ fullname, email, username, password });
 
-    await fetch(`${JSONBIN_URL}${process.env.USER_BIN_ID}`, {
+    await fetch(`${JSONBIN_URL}${USER_BIN_ID}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -92,21 +77,22 @@ app.post("/api/register", async (req, res) => {
       body: JSON.stringify(users),
     });
 
-    res.status(201).json({ message: "User registered successfully!" });
-  } catch (error) {
-    console.error("Error in /api/register:", error);
-    res.status(500).json({ message: "Server error." });
+    res.status(200).json({ message: "User registered successfully!" });
+  } catch (err) {
+    console.error("Register error:", err);
+    res.status(500).json({ message: "Server error during registration." });
   }
 });
 
-// ✅ Login
+// ✅ Login existing user
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
+
   if (!username || !password)
-    return res.status(400).json({ message: "Missing credentials." });
+    return res.status(400).json({ message: "Enter username and password." });
 
   try {
-    const response = await fetch(`${JSONBIN_URL}${process.env.USER_BIN_ID}/latest`, {
+    const response = await fetch(`${JSONBIN_URL}${USER_BIN_ID}/latest`, {
       headers: { "X-Master-Key": JSONBIN_API_KEY },
     });
     const data = await response.json();
@@ -115,79 +101,109 @@ app.post("/api/login", async (req, res) => {
     const user = users.find(
       (u) => u.username === username && u.password === password
     );
+
     if (!user)
       return res.status(401).json({ message: "Invalid username or password." });
 
     req.session.user = user;
-    res.json({ message: `Welcome ${user.name}!` });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "Server error." });
+    res.json({ message: `Welcome ${user.fullname}!` });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ message: "Server error during login." });
   }
 });
 
-// ✅ Get logged-in user info
-app.get("/api/name", (req, res) => {
-  if (req.session.user) res.json({ name: req.session.user.name });
-  else res.status(401).json({ message: "Not logged in" });
-});
-
-// ✅ Logout
+// ✅ Logout route
 app.get("/logout", (req, res) => {
   req.session.destroy(() => {
     res.redirect("/index.html");
   });
 });
 
-// ===================================================
-//  🔹 FEEDBACK MANAGEMENT
-// ===================================================
+// ✅ Get logged-in user info
+app.get("/api/name", (req, res) => {
+  if (req.session.user) {
+    res.json({ name: req.session.user.fullname });
+  } else {
+    res.status(401).json({ message: "Not logged in." });
+  }
+});
+
+// ======================================================
+// 🔐 AUTH MIDDLEWARE (Protect private pages)
+// ======================================================
+function ensureLogin(req, res, next) {
+  if (req.session.user) next();
+  else res.redirect("/index.html");
+}
+
+// ======================================================
+// 📋 FEEDBACK ROUTES
+// ======================================================
+
+// ✅ Submit feedback
 app.post("/submit-feedback", ensureLogin, async (req, res) => {
   const feedback = req.body;
-  feedback.user = req.session.user.username;
+  feedback.username = req.session.user.username;
   feedback.timestamp = new Date().toISOString();
 
   try {
-    const getRes = await fetch(`${JSONBIN_URL}${process.env.FEEDBACK_BIN_ID}/latest`, {
+    const response = await fetch(`${JSONBIN_URL}${FEEDBACK_BIN_ID}/latest`, {
       headers: { "X-Master-Key": JSONBIN_API_KEY },
     });
-    const data = await getRes.json();
-    const allFeedback = data.record || [];
+    const data = await response.json();
+    const feedbacks = data.record || [];
 
-    allFeedback.push(feedback);
+    feedbacks.push(feedback);
 
-    await fetch(`${JSONBIN_URL}${process.env.FEEDBACK_BIN_ID}`, {
+    await fetch(`${JSONBIN_URL}${FEEDBACK_BIN_ID}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         "X-Master-Key": JSONBIN_API_KEY,
       },
-      body: JSON.stringify(allFeedback),
+      body: JSON.stringify(feedbacks),
     });
 
     res.status(200).json({ message: "Feedback submitted successfully!" });
-  } catch (error) {
-    console.error("Feedback submit error:", error);
+  } catch (err) {
+    console.error("Feedback error:", err);
     res.status(500).json({ message: "Error saving feedback." });
   }
 });
 
+// ✅ Get all feedback
 app.get("/api/feedback", ensureLogin, async (req, res) => {
   try {
-    const response = await fetch(`${JSONBIN_URL}${process.env.FEEDBACK_BIN_ID}/latest`, {
+    const response = await fetch(`${JSONBIN_URL}${FEEDBACK_BIN_ID}/latest`, {
       headers: { "X-Master-Key": JSONBIN_API_KEY },
     });
     const data = await response.json();
     res.json(data.record || []);
-  } catch (error) {
-    console.error("Error fetching feedback:", error);
-    res.status(500).json({ message: "Error retrieving feedback." });
+  } catch (err) {
+    console.error("Fetch feedback error:", err);
+    res.status(500).json({ message: "Error loading feedback." });
   }
 });
 
-// ===================================================
-//  🔹 START SERVER
-// ===================================================
+// ======================================================
+// 📊 PAGE ROUTES
+// ======================================================
+app.get("/feedback", ensureLogin, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "feedback.html"));
+});
+
+app.get("/feedback-display", ensureLogin, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "feedback-display.html"));
+});
+
+app.get("/analytics", ensureLogin, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "analytics.html"));
+});
+
+// ======================================================
+// 🚀 SERVER START
+// ======================================================
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`✅ Feedback System running at: http://localhost:${PORT}`);
 });
