@@ -2,340 +2,217 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Register | Feedback System</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account | Feedback System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-    <style>
-        :root {
-            --accent: #4cc9f0;
-            --secondary: #4361ee;
-            --gradient: linear-gradient(135deg, #4cc9f0, #4361ee);
-        }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: url('register-bg.png') no-repeat center center/cover;
+      background-attachment: fixed;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Poppins", sans-serif;
-        }
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.65);
+      z-index: 0;
+    }
 
-        body {
-            background: url("register-bg.png") no-repeat center center/cover;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-        }
+    .container {
+      position: relative;
+      z-index: 1;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 40px 35px;
+      text-align: center;
+      width: 90%;
+      max-width: 450px;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(10px);
+      animation: fadeIn 1s ease-in-out;
+    }
 
-        body::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            z-index: 0;
-        }
+    h1 {
+      color: #4cc9f0;
+      margin-bottom: 10px;
+      font-size: 2rem;
+      text-shadow: 0 0 15px rgba(76, 201, 240, 0.6);
+    }
 
-        .register-container {
-            position: relative;
-            z-index: 1;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            width: 420px;
-            padding: 40px 35px;
-            text-align: center;
-            color: #fff;
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
-            animation: fadeIn 1.2s ease;
-        }
+    p {
+      color: #ddd;
+      font-size: 0.95rem;
+      margin-bottom: 25px;
+      line-height: 1.4;
+    }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
+    form input {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      margin: 8px 0;
+      outline: none;
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-size: 1rem;
+      transition: 0.3s;
+    }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    form input:focus {
+      background: rgba(255, 255, 255, 0.25);
+    }
 
-        h1 {
-            font-size: 2rem;
-            margin-bottom: 10px;
-            color: var(--accent);
-            text-shadow: 0 0 10px rgba(76, 201, 240, 0.6);
-        }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(90deg, #4361ee, #4cc9f0);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0 0 15px rgba(67, 97, 238, 0.3);
+    }
 
-        p {
-            font-size: 0.9rem;
-            color: #ddd;
-            margin-bottom: 25px;
-        }
+    button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(90deg, #4cc9f0, #4361ee);
+    }
 
-        .input-group {
-            margin-bottom: 18px;
-            position: relative;
-        }
+    a {
+      color: #4cc9f0;
+      text-decoration: none;
+      font-weight: 500;
+    }
 
-        .input-group input {
-            width: 100%;
-            padding: 12px 45px 12px 15px;
-            border: none;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 1rem;
-            outline: none;
-            transition: 0.3s;
-        }
+    a:hover {
+      text-decoration: underline;
+    }
 
-        .input-group input:focus {
-            background: rgba(255, 255, 255, 0.25);
-            box-shadow: 0 0 10px rgba(76, 201, 240, 0.5);
-        }
+    .message {
+      margin-top: 15px;
+      font-size: 0.95rem;
+    }
 
-        .input-group i {
-            position: absolute;
-            right: 15px;
-            top: 12px;
-            color: #aaa;
-            cursor: pointer;
-        }
+    footer {
+      position: absolute;
+      bottom: 20px;
+      color: #aaa;
+      font-size: 0.85rem;
+      text-align: center;
+      width: 100%;
+    }
 
-        .btn {
-            width: 100%;
-            padding: 12px;
-            background: var(--gradient);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.05rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 0 20px rgba(76, 201, 240, 0.5);
-        }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
 
-        .btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 30px rgba(76, 201, 240, 0.8);
-        }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-        .links {
-            margin-top: 25px;
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.9rem;
-        }
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.8rem;
+      }
 
-        .links a {
-            color: var(--accent);
-            text-decoration: none;
-            transition: 0.3s;
-        }
-
-        .links a:hover {
-            text-decoration: underline;
-        }
-
-        footer {
-            position: absolute;
-            bottom: 10px;
-            color: #ccc;
-            font-size: 0.8rem;
-            text-align: center;
-            width: 100%;
-        }
-
-        /* Success Popup */
-        .popup {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-        }
-
-        .popup-content {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 20px;
-            padding: 40px;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 0 25px rgba(76, 201, 240, 0.5);
-            animation: popup 0.6s ease;
-        }
-
-        @keyframes popup {
-            from {
-                transform: scale(0.7);
-                opacity: 0;
-            }
-
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        .popup-content h2 {
-            color: var(--accent);
-            margin-bottom: 15px;
-        }
-
-        .popup-content button {
-            margin-top: 15px;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            background: var(--gradient);
-            color: white;
-            font-weight: 600;
-            transition: 0.3s;
-        }
-
-        .popup-content button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(76, 201, 240, 0.6);
-        }
-
-        @media (max-width: 450px) {
-            .register-container {
-                width: 90%;
-                padding: 30px 20px;
-            }
-
-            h1 {
-                font-size: 1.7rem;
-            }
-        }
-    </style>
+      .container {
+        padding: 30px 20px;
+      }
+    }
+  </style>
 </head>
 
 <body>
-    <div class="register-container">
-        <h1><i class="fas fa-user-plus"></i> Register</h1>
-        <p>Create your account to start sharing feedback!</p>
+  <div class="overlay"></div>
 
-        <form id="registerForm">
-            <div class="input-group">
-                <input type="text" id="name" placeholder="Full Name" required />
-                <i class="fas fa-id-card"></i>
-            </div>
+  <div class="container">
+    <h1>Create Your Account</h1>
+    <p>Join the Feedback System and make your voice count. Register below to start sharing insights and helping us grow
+      together!</p>
 
-            <div class="input-group">
-                <input type="email" id="email" placeholder="Email Address" required />
-                <i class="fas fa-envelope"></i>
-            </div>
+    <form id="registerForm">
+      <input type="text" id="fullname" placeholder="Full Name" required />
+      <input type="email" id="email" placeholder="Email Address" required />
+      <input type="text" id="username" placeholder="Username" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <button type="submit">Register</button>
+    </form>
 
-            <div class="input-group">
-                <input type="text" id="username" placeholder="Username" required />
-                <i class="fas fa-user"></i>
-            </div>
+    <div class="message" id="messageBox"></div>
 
-            <div class="input-group">
-                <input type="password" id="password" placeholder="Password" required />
-                <i class="fas fa-eye" id="togglePassword"></i>
-            </div>
+    <p style="margin-top:15px;">Already have an account? <a href="index.html">Login here</a></p>
+  </div>
 
-            <div class="input-group">
-                <input type="password" id="confirmPassword" placeholder="Confirm Password" required />
-                <i class="fas fa-eye" id="toggleConfirmPassword"></i>
-            </div>
+  <footer>© 2025 Feedback System | Designed by U ARUN</footer>
 
-            <button type="submit" class="btn">Register</button>
-        </form>
+  <script>
+    document.getElementById("registerForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-        <div class="links">
-            <a href="/intro.html">← Back to Home</a>
-            <a href="/index.html">Login Now</a>
-        </div>
-    </div>
+      const fullname = document.getElementById("fullname").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const messageBox = document.getElementById("messageBox");
 
-    <footer>© 2025 Feedback System | Designed by Arun</footer>
+      if (!fullname || !email || !username || !password) {
+        messageBox.style.color = "red";
+        messageBox.textContent = "Please fill in all fields.";
+        return;
+      }
 
-    <!-- Success Popup -->
-    <div class="popup" id="successPopup">
-        <div class="popup-content">
-            <h2>🎉 Registration Successful!</h2>
-            <p>Your account has been created successfully.</p>
-            <button onclick="window.location.href='/index.html'">Go to Login</button>
-        </div>
-    </div>
-
-    <script>
-        // Password toggle logic
-        const togglePassword = document.getElementById("togglePassword");
-        const toggleConfirmPassword = document.getElementById("toggleConfirmPassword");
-        const passwordField = document.getElementById("password");
-        const confirmField = document.getElementById("confirmPassword");
-
-        togglePassword.addEventListener("click", () => {
-            const type = passwordField.getAttribute("type") === "password" ? "text" : "password";
-            passwordField.setAttribute("type", type);
-            togglePassword.classList.toggle("fa-eye-slash");
+      try {
+        const response = await fetch("/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fullname, email, username, password }),
         });
 
-        toggleConfirmPassword.addEventListener("click", () => {
-            const type = confirmField.getAttribute("type") === "password" ? "text" : "password";
-            confirmField.setAttribute("type", type);
-            toggleConfirmPassword.classList.toggle("fa-eye-slash");
-        });
+        const data = await response.json();
 
-        // Registration form
-        document.getElementById("registerForm").addEventListener("submit", async function (e) {
-            e.preventDefault();
-
-            const name = document.getElementById("name").value.trim();
-            const email = document.getElementById("email").value.trim();
-            const username = document.getElementById("username").value.trim();
-            const password = document.getElementById("password").value.trim();
-            const confirmPassword = document.getElementById("confirmPassword").value.trim();
-
-            if (!name || !email || !username || !password || !confirmPassword) {
-                alert("Please fill in all fields.");
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                alert("Passwords do not match!");
-                return;
-            }
-
-            try {
-                const res = await fetch("/api/register", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name, email, username, password }),
-                });
-
-                if (res.ok) {
-                    document.getElementById("successPopup").style.display = "flex";
-                } else {
-                    const data = await res.json();
-                    alert(data.message || "Error registering user.");
-                }
-            } catch (error) {
-                console.error(error);
-                alert("Error connecting to the server.");
-            }
-        });
-    </script>
+        if (response.ok) {
+          messageBox.style.color = "#4cc9f0";
+          messageBox.textContent = "🎉 Registration successful! Redirecting to login...";
+          setTimeout(() => {
+            window.location.href = "index.html";
+          }, 1500);
+        } else {
+          messageBox.style.color = "red";
+          messageBox.textContent = data.message || "Registration failed. Try again.";
+        }
+      } catch (err) {
+        messageBox.style.color = "red";
+        messageBox.textContent = "⚠️ Network error. Please try again.";
+      }
+    });
+  </script>
 </body>
 
 </html>
