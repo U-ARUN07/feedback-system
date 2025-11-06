@@ -1,4 +1,4 @@
-// ✅ FEEDBACK SYSTEM SERVER — FINAL VERSION
+// ✅ FINAL FEEDBACK SYSTEM SERVER
 // Author: U ARUN
 
 import express from "express";
@@ -9,17 +9,22 @@ import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 dotenv.config();
 
+// -------------------------------------------------------
+// INITIAL CONFIGURATION
+// -------------------------------------------------------
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// ✅ Fetch Polyfill (works for Node 16–22)
-const fetchFn = global.fetch || ((...args) => import("node-fetch").then(({ default: f }) => f(...args)));
+// ✅ Fetch Polyfill (works across Node versions)
+const fetchFn =
+  global.fetch || ((...args) => import("node-fetch").then(({ default: f }) => f(...args)));
 
-// ✅ Path setup
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ✅ Middleware setup
+// -------------------------------------------------------
+// MIDDLEWARE SETUP
+// -------------------------------------------------------
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(
@@ -30,24 +35,24 @@ app.use(
   })
 );
 
-// ======================================================
-// 🏠 DEFAULT PAGE (INTRO)
-// ======================================================
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "intro.html"));
-});
-
-app.get("/intro", (req, res) => {
-  res.redirect("/");
-});
-
-// ======================================================
-// 🔒 AUTHENTICATION HANDLERS
-// ======================================================
+// -------------------------------------------------------
+// ENVIRONMENT VARIABLES
+// -------------------------------------------------------
 const JSONBIN_API_KEY = process.env.JSONBIN_API_KEY;
 const JSONBIN_URL = "https://api.jsonbin.io/v3/b/";
 const USER_BIN_ID = process.env.USER_BIN_ID;
 const FEEDBACK_BIN_ID = process.env.FEEDBACK_BIN_ID;
+
+// -------------------------------------------------------
+// DEFAULT ROUTE: INTRO PAGE
+// -------------------------------------------------------
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "intro.html"));
+});
+
+// -------------------------------------------------------
+// AUTHENTICATION: REGISTER & LOGIN
+// -------------------------------------------------------
 
 // ✅ Register a new user
 app.post("/api/register", async (req, res) => {
@@ -84,7 +89,7 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-// ✅ Login existing user
+// ✅ Login
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password)
@@ -104,42 +109,43 @@ app.post("/api/login", async (req, res) => {
     if (!user) return res.status(401).json({ message: "Invalid credentials." });
 
     req.session.user = user;
-    res.json({ message: `Welcome ${user.fullname}!` });
+    res.json({ message: `Welcome ${user.fullname}!`, fullname: user.fullname });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ message: "Server error during login." });
   }
 });
 
-// ✅ Logout route
+// ✅ Logout
 app.get("/logout", (req, res) => {
   req.session.destroy(() => {
     res.redirect("/index.html");
   });
 });
 
-// ✅ Get logged-in user info
+// ✅ Get user name
 app.get("/api/name", (req, res) => {
   if (req.session.user) res.json({ name: req.session.user.fullname });
   else res.status(401).json({ message: "Not logged in." });
 });
 
-// ======================================================
-// 🔐 MIDDLEWARE: REQUIRE LOGIN
-// ======================================================
+// -------------------------------------------------------
+// MIDDLEWARE: ENSURE LOGIN
+// -------------------------------------------------------
 function ensureLogin(req, res, next) {
   if (req.session.user) next();
   else res.redirect("/index.html");
 }
 
-// ======================================================
-// 📋 FEEDBACK ROUTES
-// ======================================================
+// -------------------------------------------------------
+// FEEDBACK ROUTES
+// -------------------------------------------------------
 
-// ✅ Submit feedback
+// ✅ Submit feedback (for any category)
 app.post("/submit-feedback", ensureLogin, async (req, res) => {
   const feedback = req.body;
   feedback.username = req.session.user.username;
+  feedback.fullname = req.session.user.fullname;
   feedback.timestamp = new Date().toISOString();
 
   try {
@@ -167,7 +173,7 @@ app.post("/submit-feedback", ensureLogin, async (req, res) => {
   }
 });
 
-// ✅ Retrieve all feedback
+// ✅ Fetch all feedback
 app.get("/api/feedback", ensureLogin, async (req, res) => {
   try {
     const response = await fetchFn(`${JSONBIN_URL}${FEEDBACK_BIN_ID}/latest`, {
@@ -181,9 +187,9 @@ app.get("/api/feedback", ensureLogin, async (req, res) => {
   }
 });
 
-// ======================================================
-// 📊 PAGE ROUTES
-// ======================================================
+// -------------------------------------------------------
+// PAGE ROUTES
+// -------------------------------------------------------
 app.get("/feedback", ensureLogin, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "feedback.html"));
 });
@@ -196,9 +202,17 @@ app.get("/analytics", ensureLogin, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "analytics.html"));
 });
 
-// ======================================================
-// 🚀 START SERVER
-// ======================================================
+// Category-specific feedback pages
+const categories = ["restaurant", "hotel", "mall", "product", "institution"];
+categories.forEach((cat) => {
+  app.get(`/${cat}-feedback`, ensureLogin, (req, res) => {
+    res.sendFile(path.join(__dirname, "public", `${cat}-feedback.html`));
+  });
+});
+
+// -------------------------------------------------------
+// SERVER START
+// -------------------------------------------------------
 app.listen(PORT, () => {
-  console.log(`✅ Feedback System is live at: http://localhost:${PORT}`);
+  console.log(`✅ Feedback System running at: http://localhost:${PORT}`);
 });
