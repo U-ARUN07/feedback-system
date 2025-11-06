@@ -64,12 +64,20 @@
       line-height: 1.4;
     }
 
-    form input {
+    form {
+      position: relative;
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 15px;
+    }
+
+    input {
       width: 100%;
-      padding: 12px;
+      padding: 12px 40px 12px 12px;
       border: none;
       border-radius: 8px;
-      margin: 8px 0;
       outline: none;
       background: rgba(255, 255, 255, 0.15);
       color: #fff;
@@ -77,8 +85,23 @@
       transition: 0.3s;
     }
 
-    form input:focus {
+    input:focus {
       background: rgba(255, 255, 255, 0.25);
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #4cc9f0;
+      font-size: 1rem;
+      transition: 0.3s;
+    }
+
+    .toggle-password:hover {
+      color: #fff;
     }
 
     button {
@@ -114,6 +137,16 @@
     .message {
       margin-top: 15px;
       font-size: 0.95rem;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+
+    .error {
+      color: #ff6b6b;
+    }
+
+    .success {
+      color: #4cc9f0;
     }
 
     footer {
@@ -153,15 +186,32 @@
   <div class="overlay"></div>
 
   <div class="container">
-    <h1>Create Your Account</h1>
-    <p>Join the Feedback System and make your voice count. Register below to start sharing insights and helping us grow
-      together!</p>
+    <h1>Create Account</h1>
+    <p>Join our Feedback System to share your thoughts and shape a better experience for everyone.</p>
 
     <form id="registerForm">
-      <input type="text" id="fullname" placeholder="Full Name" required />
-      <input type="email" id="email" placeholder="Email Address" required />
-      <input type="text" id="username" placeholder="Username" required />
-      <input type="password" id="password" placeholder="Password" required />
+      <div class="input-group">
+        <input type="text" id="fullname" placeholder="Full Name" required />
+      </div>
+
+      <div class="input-group">
+        <input type="email" id="email" placeholder="Email Address" required />
+      </div>
+
+      <div class="input-group">
+        <input type="text" id="username" placeholder="Username" required />
+      </div>
+
+      <div class="input-group">
+        <input type="password" id="password" placeholder="Password" required />
+        <i class="fas fa-eye toggle-password" id="togglePass"></i>
+      </div>
+
+      <div class="input-group">
+        <input type="password" id="confirmPassword" placeholder="Confirm Password" required />
+        <i class="fas fa-eye toggle-password" id="toggleConfirm"></i>
+      </div>
+
       <button type="submit">Register</button>
     </form>
 
@@ -173,6 +223,20 @@
   <footer>© 2025 Feedback System | Designed by U ARUN</footer>
 
   <script>
+    // Toggle show/hide for both password fields
+    function togglePassword(id, toggleId) {
+      const field = document.getElementById(id);
+      const toggle = document.getElementById(toggleId);
+      toggle.addEventListener("click", () => {
+        const isHidden = field.type === "password";
+        field.type = isHidden ? "text" : "password";
+        toggle.classList.toggle("fa-eye-slash");
+      });
+    }
+
+    togglePassword("password", "togglePass");
+    togglePassword("confirmPassword", "toggleConfirm");
+
     document.getElementById("registerForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
@@ -180,11 +244,18 @@
       const email = document.getElementById("email").value.trim();
       const username = document.getElementById("username").value.trim();
       const password = document.getElementById("password").value.trim();
+      const confirmPassword = document.getElementById("confirmPassword").value.trim();
       const messageBox = document.getElementById("messageBox");
 
-      if (!fullname || !email || !username || !password) {
-        messageBox.style.color = "red";
-        messageBox.textContent = "Please fill in all fields.";
+      if (!fullname || !email || !username || !password || !confirmPassword) {
+        messageBox.className = "message error";
+        messageBox.textContent = "⚠️ Please fill in all fields.";
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        messageBox.className = "message error";
+        messageBox.textContent = "❌ Passwords do not match.";
         return;
       }
 
@@ -192,23 +263,23 @@
         const response = await fetch("/api/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fullname, email, username, password }),
+          body: JSON.stringify({ name: fullname, email, username, password }),
         });
 
         const data = await response.json();
 
         if (response.ok) {
-          messageBox.style.color = "#4cc9f0";
-          messageBox.textContent = "🎉 Registration successful! Redirecting to login...";
+          messageBox.className = "message success";
+          messageBox.textContent = "🎉 Registration successful! Redirecting...";
           setTimeout(() => {
             window.location.href = "index.html";
           }, 1500);
         } else {
-          messageBox.style.color = "red";
-          messageBox.textContent = data.message || "Registration failed. Try again.";
+          messageBox.className = "message error";
+          messageBox.textContent = data.message || "Registration failed.";
         }
       } catch (err) {
-        messageBox.style.color = "red";
+        messageBox.className = "message error";
         messageBox.textContent = "⚠️ Network error. Please try again.";
       }
     });
