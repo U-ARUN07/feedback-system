@@ -1,258 +1,272 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const path = require('path');
-const session = require('express-session');
-const WebSocket = require('ws');
-const axios = require('axios');
+// ============================
+// Feedback System (Full Server)
+// ============================
+
+const express = require("express");
+const bodyParser = require("body-parser");
+const session = require("express-session");
+const path = require("path");
+const fs = require("fs");
+const WebSocket = require("ws");
 
 const app = express();
 const port = process.env.PORT || 4000;
 
-// Middleware setup
+// ------------------------------
+// Middleware & Session Setup
+// ------------------------------
+app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.json());
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'Arun@2006',
+    secret: "Arun@2006", // ✅ your session key
     resave: false,
     saveUninitialized: true,
     cookie: { secure: false },
   })
 );
 
-// ✅ Serve intro page first (main homepage)
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'intro.html'));
-});
+// Serve static files (HTML, CSS, JS, Images)
+app.use(express.static(path.join(__dirname, "public")));
 
-// ✅ Serve static assets (HTML, CSS, JS, images)
-app.use(express.static(path.join(__dirname, 'public')));
+// ------------------------------
+// File Paths & Load Data
+// ------------------------------
+const usersFilePath = path.join(__dirname, "users.json");
+const feedbackFilePath = path.join(__dirname, "feedback.json");
 
-//
-// ---------------- JSONBin Helper Functions ----------------
-//
+let usersData = [];
+let feedbackData = [];
 
-// Load data from a JSONBin
-async function loadBin(binId) {
-  try {
-    const response = await axios.get(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
-      headers: { 'X-Master-Key': process.env.JSONBIN_API_KEY },
-    });
-    return response.data.record || [];
-  } catch (error) {
-    console.error('Error loading bin:', error.message);
-    return [];
-  }
+if (fs.existsSync(usersFilePath)) {
+  usersData = JSON.parse(fs.readFileSync(usersFilePath, "utf8"));
+}
+if (fs.existsSync(feedbackFilePath)) {
+  feedbackData = JSON.parse(fs.readFileSync(feedbackFilePath, "utf8"));
 }
 
-// Save data back to a JSONBin
-async function saveBin(binId, data) {
-  try {
-    await axios.put(`https://api.jsonbin.io/v3/b/${binId}`, data, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Master-Key': process.env.JSONBIN_API_KEY,
-      },
-    });
-  } catch (error) {
-    console.error('Error saving bin:', error.message);
+// ------------------------------
+// Intro Page (Landing Page)
+// ------------------------------
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "intro.html"));
+});
+
+// ------------------------------
+// Authentication Routes
+// ------------------------------
+
+// ✅ Register
+app.post("/api/register", (req, res) => {
+  const { name, email, username, password } = req.body;
+
+  if (!name || !email || !username || !password) {
+    return res.status(400).json({ message: "All fields are required" });
   }
-}
 
-//
-// ---------------- AUTH ROUTES ----------------
-//
+  if (usersData.some((u) => u.username === username)) {
+    return res.status(400).json({ message: "Username already exists" });
+  }
 
-// Login page
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  usersData.push({ name, email, username, password });
+  fs.writeFileSync(usersFilePath, JSON.stringify(usersData, null, 2));
+
+  res.json({ message: "User registered successfully" });
 });
 
-// Register page
-app.get('/register', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'register.html'));
-});
-
-// Register user
-app.post('/register', async (req, res) => {
-  const { name, email, username, password, confirmPassword } = req.body;
-
-  if (!name || !email || !username || !password || !confirmPassword)
-    return res.status(400).send('All fields are required');
-  if (password !== confirmPassword)
-    return res.status(400).send('Passwords do not match');
-
-  const usersData = await loadBin(process.env.USERS_BIN_ID);
-  if (usersData.some((u) => u.username === username))
-    return res.status(400).send('Username already exists');
-
-  const newUser = { name, email, username, password };
-  usersData.push(newUser);
-  await saveBin(process.env.USERS_BIN_ID, usersData);
-
-  res.redirect('/login');
-});
-
-// Login user
-app.post('/login', async (req, res) => {
+// ✅ Login
+app.post("/api/login", (req, res) => {
   const { username, password } = req.body;
+  const user = usersData.find(
+    (u) => u.username === username && u.password === password
+  );
 
-  const usersData = await loadBin(process.env.USERS_BIN_ID);
-  const user = usersData.find((u) => u.username === username && u.password === password);
+  if (!user) {
+    return res.status(401).json({ message: "Invalid username or password" });
+  }
 
-  if (!user) return res.status(401).send('Invalid credentials');
-
-  req.session.name = user.name;
-  res.redirect('/feedback');
+  req.session.user = { name: user.name, username: user.username };
+  res.json({ message: "Login successful", name: user.name });
 });
 
-//
-// ---------------- FEEDBACK ROUTES ----------------
-//
-
-// Feedback main page
-app.get('/feedback', (req, res) => {
-  if (!req.session.name) return res.redirect('/login');
-  res.sendFile(path.join(__dirname, 'public', 'feedback.html'));
-});
-
-// Feedback form routes
-const feedbackPages = ['restaurant', 'hotel', 'product', 'mall', 'institution'];
-feedbackPages.forEach((type) => {
-  app.get(`/${type}-feedback`, (req, res) => {
-    if (!req.session.name) return res.redirect('/login');
-    res.sendFile(path.join(__dirname, 'public', `${type}-feedback.html`));
+// ✅ Logout
+app.get("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) console.error("Error destroying session:", err);
+    res.redirect("/");
   });
 });
 
-// Submit feedback
-app.post('/submit-feedback', async (req, res) => {
-  if (!req.session.name) return res.redirect('/login');
+// ✅ Get Logged-in User Info
+app.get("/api/name", (req, res) => {
+  if (req.session.user) {
+    res.json({ name: req.session.user.name });
+  } else {
+    res.status(401).json({ error: "Not logged in" });
+  }
+});
+
+// ------------------------------
+// Feedback Routes
+// ------------------------------
+
+// ✅ Category Page (Feedback Selection)
+app.get("/feedback", (req, res) => {
+  if (!req.session.user) return res.redirect("/index.html");
+  res.sendFile(path.join(__dirname, "public", "feedback.html"));
+});
+
+// ✅ Submit Feedback
+app.post("/submit-feedback", (req, res) => {
+  if (!req.session.user) return res.status(401).send("Not logged in");
 
   const feedback = req.body;
-  feedback.name = req.session.name;
+  feedback.name = req.session.user.name;
   feedback.timestamp = new Date().toISOString();
 
-  const feedbackData = await loadBin(process.env.FEEDBACK_BIN_ID);
   feedbackData.push(feedback);
-  await saveBin(process.env.FEEDBACK_BIN_ID, feedbackData);
+  fs.writeFileSync(feedbackFilePath, JSON.stringify(feedbackData, null, 2));
 
-  res.redirect('/feedback-display');
+  res.json({ message: "Feedback submitted successfully" });
 });
 
-// Feedback display page
-app.get('/feedback-display', (req, res) => {
-  if (!req.session.name) return res.redirect('/login');
-  res.sendFile(path.join(__dirname, 'public', 'feedback-display.html'));
+// ✅ Fetch User Feedbacks
+app.get("/api/feedback", (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: "Not logged in" });
+
+  const userFeedback = feedbackData.filter(
+    (f) => f.name === req.session.user.name
+  );
+  res.json(userFeedback);
 });
 
-// Analytics page
-app.get('/analytics', (req, res) => {
-  if (!req.session.name) return res.redirect('/login');
-  res.sendFile(path.join(__dirname, 'public', 'analytics.html'));
+// ------------------------------
+// Analytics Routes
+// ------------------------------
+app.get("/analytics", (req, res) => {
+  if (!req.session.user) return res.redirect("/index.html");
+  res.sendFile(path.join(__dirname, "public", "analytics.html"));
 });
 
-//
-// ---------------- API ROUTES ----------------
-//
+// ✅ API for Analytics Data
+app.get("/api/analytics", (req, res) => {
+  if (!req.session.user)
+    return res.status(401).json({ error: "Not logged in" });
 
-// API: Return logged-in user name
-app.get('/api/name', (req, res) => {
-  if (!req.session.name) return res.status(401).json({ error: 'Not logged in' });
-  res.json({ name: req.session.name });
+  const analyticsData = generateAnalyticsData();
+  res.json(analyticsData);
 });
 
-// API: Fetch user’s feedback data
-app.get('/api/feedback', async (req, res) => {
-  if (!req.session.name) return res.status(401).json({ error: 'Not logged in' });
+// ------------------------------
+// Helper Functions
+// ------------------------------
+function generateAnalyticsData() {
+  const days = 30;
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now);
+  thirtyDaysAgo.setDate(now.getDate() - days);
 
-  try {
-    const feedbackData = await loadBin(process.env.FEEDBACK_BIN_ID);
-    const userFeedback = feedbackData.filter((f) => f.name === req.session.name);
-    res.json(userFeedback);
-  } catch (error) {
-    console.error('Error fetching feedback:', error.message);
-    res.status(500).json({ error: 'Failed to load feedback' });
-  }
-});
+  const recentFeedback = feedbackData.filter(
+    (f) => new Date(f.timestamp) >= thirtyDaysAgo
+  );
 
-// API: Analytics data
-app.get('/api/analytics', async (req, res) => {
-  try {
-    const feedbackData = await loadBin(process.env.FEEDBACK_BIN_ID);
-    const categories = ['Restaurant', 'Hotel', 'Product', 'Mall', 'Institution'];
+  const categories = ["Restaurant", "Hotel", "Product", "Mall", "Institution"];
+  const feedbackCounts = categories.map(
+    (cat) => recentFeedback.filter((f) => f.category === cat).length
+  );
 
-    const categoryDetails = categories.map((cat) => {
-      const catFeedback = feedbackData.filter((f) => f.category === cat);
-      const avgRating =
-        catFeedback.length > 0
-          ? (
-              catFeedback.reduce(
-                (sum, f) =>
-                  sum +
-                  (parseInt(f['q1-rating']) +
-                    parseInt(f['q2-rating']) +
-                    parseInt(f['q3-rating']) +
-                    parseInt(f['q4-rating'])) /
-                    4,
-                0
-              ) / catFeedback.length
-            ).toFixed(1)
-          : 0;
+  const timeLabels = [];
+  const averageRatings = [];
 
-      const ratings = [0, 0, 0, 0, 0];
-      catFeedback.forEach((f) => {
-        const avg =
-          (parseInt(f['q1-rating']) +
-            parseInt(f['q2-rating']) +
-            parseInt(f['q3-rating']) +
-            parseInt(f['q4-rating'])) /
-          4;
-        const index = Math.min(Math.floor(avg / 2), 4);
-        ratings[index]++;
-      });
-
-      return { name: cat, averageRating: parseFloat(avgRating), ratings };
-    });
-
-    const feedbackCounts = categoryDetails.map((c) =>
-      feedbackData.filter((f) => f.category === c.name).length
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    timeLabels.push(
+      date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
     );
 
-    const response = {
-      categories,
-      feedbackCounts,
-      categoryDetails,
-      timeLabels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-      averageRatings: [3.8, 4.2, 4.5, 4.3],
-    };
+    const dayFeedback = recentFeedback.filter(
+      (f) => new Date(f.timestamp).toDateString() === date.toDateString()
+    );
 
-    res.json(response);
-  } catch (error) {
-    console.error('Error building analytics:', error.message);
-    res.status(500).json({ error: 'Failed to load analytics data' });
+    if (dayFeedback.length > 0) {
+      const avg =
+        dayFeedback.reduce((sum, f) => {
+          const total =
+            (parseInt(f["q1-rating"]) || 0) +
+            (parseInt(f["q2-rating"]) || 0) +
+            (parseInt(f["q3-rating"]) || 0) +
+            (parseInt(f["q4-rating"]) || 0);
+          return sum + total / 4;
+        }, 0) / dayFeedback.length;
+      averageRatings.push(avg.toFixed(2));
+    } else {
+      averageRatings.push(0);
+    }
   }
-});
 
-// Logout
-app.get('/logout', (req, res) => {
-  req.session.destroy((err) => {
-    if (err) console.error('Session destroy error:', err);
-    res.redirect('/');
+  const categoryDetails = categories.map((cat) => {
+    const catFeedback = recentFeedback.filter((f) => f.category === cat);
+    if (catFeedback.length === 0)
+      return { name: cat, averageRating: 0, ratings: [0, 0, 0, 0, 0] };
+
+    const total = catFeedback.reduce((sum, f) => {
+      const avg =
+        ((parseInt(f["q1-rating"]) || 0) +
+          (parseInt(f["q2-rating"]) || 0) +
+          (parseInt(f["q3-rating"]) || 0) +
+          (parseInt(f["q4-rating"]) || 0)) /
+        4;
+      return sum + avg;
+    }, 0);
+
+    const averageRating = total / catFeedback.length;
+    const ratings = [0, 0, 0, 0, 0];
+    catFeedback.forEach((f) => {
+      const avg =
+        ((parseInt(f["q1-rating"]) || 0) +
+          (parseInt(f["q2-rating"]) || 0) +
+          (parseInt(f["q3-rating"]) || 0) +
+          (parseInt(f["q4-rating"]) || 0)) /
+        4;
+      const rounded = Math.round(avg);
+      if (rounded >= 1 && rounded <= 5) ratings[rounded - 1]++;
+    });
+
+    return { name: cat, averageRating, ratings };
   });
-});
 
-//
-// ---------------- SERVER + WEBSOCKET ----------------
-//
+  return {
+    categories,
+    feedbackCounts,
+    timeLabels,
+    averageRatings,
+    categoryDetails,
+  };
+}
 
+// ------------------------------
+// WebSocket for Real-time Analytics
+// ------------------------------
 const server = app.listen(port, () => {
-  console.log(`✅ Feedback System running at http://localhost:${port}`);
+  console.log(`🚀 Server running at http://localhost:${port}`);
 });
 
-const wss = new WebSocket.Server({ server });
-wss.on('connection', (ws) => {
-  console.log('🔗 WebSocket connected');
-  ws.send(JSON.stringify({ status: 'connected' }));
-  ws.on('close', () => console.log('❌ WebSocket disconnected'));
+const wss = new WebSocket.Server({ server, path: "/ws/analytics" });
+
+wss.on("connection", (ws) => {
+  console.log("📊 New WebSocket connection (Analytics)");
+
+  const sendAnalytics = () => {
+    const analyticsData = generateAnalyticsData();
+    ws.send(JSON.stringify(analyticsData));
+  };
+
+  sendAnalytics();
+  const interval = setInterval(sendAnalytics, 10000); // update every 10s
+
+  ws.on("close", () => {
+    clearInterval(interval);
+    console.log("❌ Analytics WebSocket closed");
+  });
 });
