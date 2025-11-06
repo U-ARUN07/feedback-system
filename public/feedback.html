@@ -2,148 +2,304 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feedback Categories</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Feedback Categories | Feedback System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
     <style>
+        :root {
+            --primary: #7209b7;
+            --accent: #4cc9f0;
+            --dark: #0b132b;
+            --light: #f8f9fa;
+            --gradient: linear-gradient(135deg, #3a0ca3, #4361ee, #4cc9f0);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background-image: url('feedback-bg.jpg');
-            background-size: cover;
-            color: white;
+            font-family: 'Poppins', sans-serif;
+            background: radial-gradient(circle at top left, #0b132b, #1c2541, #3a0ca3);
+            color: var(--light);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-attachment: fixed;
+        }
+
+        /* 🔹 NAVBAR */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 1rem 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeDown 1s ease;
+        }
+
+        @keyframes fadeDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        nav .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 1px;
+        }
+
+        nav .logo i {
+            margin-right: 10px;
+            color: var(--accent);
+            filter: drop-shadow(0 0 10px var(--accent));
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #fff;
+            margin-left: 1.8rem;
+            font-weight: 500;
+            transition: 0.3s;
+            position: relative;
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -3px;
+            width: 0%;
+            height: 2px;
+            background: var(--accent);
+            transition: width 0.3s;
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        /* 🔹 CONTAINER */
+        .container {
+            margin-top: 120px;
             text-align: center;
             padding: 20px;
+            animation: fadeIn 1.5s ease;
         }
 
-        .container {
-            background: rgba(0, 0, 0, 0.7);
-            padding: 20px;
-            border-radius: 10px;
-            max-width: 600px;
-            margin: 50px auto;
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .welcome-message {
-            font-size: 24px;
-            margin-bottom: 20px;
+        h1 {
+            font-size: 2.5rem;
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(76, 201, 240, 0.8);
+            margin-bottom: 15px;
         }
 
-        .category-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
+        p {
+            color: #cfcfcf;
+            font-size: 1rem;
+            margin-bottom: 50px;
         }
 
-        .category-buttons button {
-            width: 150px;
-            height: 150px;
-            background-size: cover;
-            background-position: center;
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            border: none;
-            border-radius: 10px;
+        /* 🔹 CATEGORIES GRID */
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+            gap: 30px;
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        /* 🔹 CATEGORY CARD */
+        .category-card {
+            position: relative;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 40px 25px;
+            text-align: center;
+            overflow: hidden;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s ease;
             cursor: pointer;
-            transition: transform 0.2s;
         }
 
-        .category-buttons button:hover {
-            transform: scale(1.1);
+        .category-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 0 40px rgba(76, 201, 240, 0.5);
         }
 
-        .action-links {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 30px;
+        .category-card::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(76, 201, 240, 0.15), transparent 70%);
+            transform: rotate(45deg);
+            z-index: 0;
+            transition: 0.5s;
         }
 
-        .action-link {
-            background: rgba(76, 175, 80, 0.2);
-            color: #4CAF50;
-            padding: 10px 20px;
-            border-radius: 6px;
+        .category-card:hover::before {
+            transform: rotate(60deg);
+        }
+
+        .category-card i {
+            font-size: 2.8rem;
+            color: var(--accent);
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+            filter: drop-shadow(0 0 10px var(--accent));
+        }
+
+        .category-card h2 {
+            font-size: 1.4rem;
+            color: #fff;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .category-card p {
+            font-size: 0.95rem;
+            color: #ccc;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .category-card a {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            color: #fff;
+            padding: 10px 22px;
+            border-radius: 10px;
             text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border: 1px solid #4CAF50;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+            transition: 0.3s;
         }
 
-        .action-link:hover {
-            background: rgba(76, 175, 80, 0.4);
-            transform: translateY(-2px);
-            text-decoration: none;
+        .category-card a:hover {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            transform: scale(1.08);
+            box-shadow: 0 0 15px var(--accent);
         }
 
-        .action-link.logout {
-            background: rgba(220, 53, 69, 0.2);
-            color: #dc3545;
-            border-color: #dc3545;
+        /* 🔹 FOOTER */
+        footer {
+            text-align: center;
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-top: 60px;
+            letter-spacing: 0.5px;
         }
 
-        .action-link.logout:hover {
-            background: rgba(220, 53, 69, 0.4);
-        }
+        /* 🔹 RESPONSIVE */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
 
-        .action-link.analytics {
-            background: rgba(67, 97, 238, 0.2);
-            color: #4361ee;
-            border-color: #4361ee;
-        }
-
-        .action-link.analytics:hover {
-            background: rgba(67, 97, 238, 0.4);
-        }
-
-        a {
-            color: #4CAF50;
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
+            .category-card {
+                padding: 30px 20px;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <div class="welcome-message" id="welcome-message"></div>
-        <h1>Select Feedback Category</h1>
-        <div class="category-buttons">
-            <button onclick="location.href='/restaurant-feedback'"
-                style="background-image: url('restaurant-icon.jpeg');">Restaurant</button>
-            <button onclick="location.href='/hotel-feedback'"
-                style="background-image: url('hotel-icon.jpeg');">Hotel</button>
-            <button onclick="location.href='/product-feedback'"
-                style="background-image: url('product-icon.jpeg');">Product</button>
-            <button onclick="location.href='/mall-feedback'"
-                style="background-image: url('mall-icon.jpeg');">Mall</button>
-            <button onclick="location.href='/institution-feedback'"
-                style="background-image: url('institution-icon.jpeg');">Institution</button>
+    <nav>
+        <div class="logo">
+            <i class="fas fa-comments"></i> Feedback System
         </div>
-        <div class="action-links">
-            <a href="/feedback" class="action-link">Back to Categories</a>
-            <a href="/analytics" class="action-link analytics">View Analytics</a>
-            <a href="/feedback-display" class="action-link">View Your Feedback</a>
-            <a href="/logout" class="action-link logout">Logout</a>
+        <div class="nav-links">
+            <a href="/feedback-display">View Feedback</a>
+            <a href="/analytics">Analytics</a>
+            <a href="/logout">Logout</a>
         </div>
-    </div>
+    </nav>
 
-    <script>
-        // Fetch the user's name from the backend
-        fetch('/api/name')
-            .then(response => response.json())
-            .then(data => {
-                const welcomeMessage = document.getElementById('welcome-message');
-                if (data.name) {
-                    welcomeMessage.textContent = `Welcome, ${data.name}!`;
-                }
-            })
-            .catch(error => console.error('Error fetching name:', error));
-    </script>
+    <div class="container">
+        <h1>Choose a Feedback Category</h1>
+        <p>Select the type of feedback you’d like to share below.</p>
+
+        <div class="categories">
+            <div class="category-card">
+                <i class="fas fa-utensils"></i>
+                <h2>Restaurant</h2>
+                <p>Share your dining experience — food, service, and ambiance.</p>
+                <a href="restaurant-feedback.html">Give Feedback</a>
+            </div>
+
+            <div class="category-card">
+                <i class="fas fa-hotel"></i>
+                <h2>Hotel</h2>
+                <p>Rate your stay — comfort, service, and facilities.</p>
+                <a href="hotel-feedback.html">Give Feedback</a>
+            </div>
+
+            <div class="category-card">
+                <i class="fas fa-store"></i>
+                <h2>Mall</h2>
+                <p>How was your shopping experience? Let us know!</p>
+                <a href="mall-feedback.html">Give Feedback</a>
+            </div>
+
+            <div class="category-card">
+                <i class="fas fa-box-open"></i>
+                <h2>Product</h2>
+                <p>Tell us your opinion about our product’s quality.</p>
+                <a href="product-feedback.html">Give Feedback</a>
+            </div>
+
+            <div class="category-card">
+                <i class="fas fa-university"></i>
+                <h2>Institution</h2>
+                <p>Provide feedback on your academic or campus experience.</p>
+                <a href="institution-feedback.html">Give Feedback</a>
+            </div>
+        </div>
+
+        <footer>© 2025 Feedback System | Designed by Arun</footer>
+    </div>
 </body>
 
 </html>
