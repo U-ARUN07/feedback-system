@@ -2,304 +2,265 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Feedback Categories | Feedback System</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-    <style>
-        :root {
-            --primary: #7209b7;
-            --accent: #4cc9f0;
-            --dark: #0b132b;
-            --light: #f8f9fa;
-            --gradient: linear-gradient(135deg, #3a0ca3, #4361ee, #4cc9f0);
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback Categories | Feedback System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: url('feedback-bg.jpg') no-repeat center center/cover;
+      background-attachment: fixed;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: radial-gradient(circle at top left, #0b132b, #1c2541, #3a0ca3);
-            color: var(--light);
-            overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            background-attachment: fixed;
-        }
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.65);
+      z-index: 0;
+    }
 
-        /* 🔹 NAVBAR */
-        nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 1rem 2.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1000;
-            animation: fadeDown 1s ease;
-        }
+    header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 50px;
+      z-index: 5;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-        @keyframes fadeDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #4cc9f0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    .welcome-text {
+      font-size: 1rem;
+      font-weight: 500;
+      color: #dfe6ee;
+    }
 
-        nav .logo {
-            display: flex;
-            align-items: center;
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: var(--accent);
-            letter-spacing: 1px;
-        }
+    .logout-btn {
+      background: linear-gradient(90deg, #ff4d6d, #ff758f);
+      border: none;
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: 0.3s;
+    }
 
-        nav .logo i {
-            margin-right: 10px;
-            color: var(--accent);
-            filter: drop-shadow(0 0 10px var(--accent));
-        }
+    .logout-btn:hover {
+      background: linear-gradient(90deg, #ff758f, #ff4d6d);
+      transform: scale(1.05);
+    }
 
-        nav a {
-            text-decoration: none;
-            color: #fff;
-            margin-left: 1.8rem;
-            font-weight: 500;
-            transition: 0.3s;
-            position: relative;
-        }
+    main {
+      position: relative;
+      z-index: 1;
+      padding: 120px 40px 60px 40px;
+      width: 100%;
+      max-width: 1200px;
+      text-align: center;
+    }
 
-        nav a::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            bottom: -3px;
-            width: 0%;
-            height: 2px;
-            background: var(--accent);
-            transition: width 0.3s;
-        }
+    h1 {
+      font-size: 2.2rem;
+      color: #4cc9f0;
+      margin-bottom: 30px;
+      text-shadow: 0 0 15px rgba(76, 201, 240, 0.6);
+      animation: fadeInDown 1s ease-in-out;
+    }
 
-        nav a:hover::after {
-            width: 100%;
-        }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 25px;
+      margin-top: 30px;
+    }
 
-        /* 🔹 CONTAINER */
-        .container {
-            margin-top: 120px;
-            text-align: center;
-            padding: 20px;
-            animation: fadeIn 1.5s ease;
-        }
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 30px 20px;
+      backdrop-filter: blur(10px);
+      transition: 0.4s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+      animation: fadeInUp 1.2s ease-in-out;
+    }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 0 25px rgba(76, 201, 240, 0.5);
+      background: rgba(255, 255, 255, 0.15);
+    }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    .card i {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      color: #4cc9f0;
+    }
 
-        h1 {
-            font-size: 2.5rem;
-            color: var(--accent);
-            text-shadow: 0 0 20px rgba(76, 201, 240, 0.8);
-            margin-bottom: 15px;
-        }
+    .card h3 {
+      color: #fff;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
 
-        p {
-            color: #cfcfcf;
-            font-size: 1rem;
-            margin-bottom: 50px;
-        }
+    .card p {
+      color: #cfd8e3;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
 
-        /* 🔹 CATEGORIES GRID */
-        .categories {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-            gap: 30px;
-            max-width: 1100px;
-            margin: auto;
-        }
+    footer {
+      margin-top: 40px;
+      color: #ccc;
+      font-size: 0.85rem;
+    }
 
-        /* 🔹 CATEGORY CARD */
-        .category-card {
-            position: relative;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 20px;
-            padding: 40px 25px;
-            text-align: center;
-            overflow: hidden;
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
-            transition: all 0.4s ease;
-            cursor: pointer;
-        }
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
 
-        .category-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 0 40px rgba(76, 201, 240, 0.5);
-        }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-        .category-card::before {
-            content: "";
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(76, 201, 240, 0.15), transparent 70%);
-            transform: rotate(45deg);
-            z-index: 0;
-            transition: 0.5s;
-        }
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
 
-        .category-card:hover::before {
-            transform: rotate(60deg);
-        }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-        .category-card i {
-            font-size: 2.8rem;
-            color: var(--accent);
-            margin-bottom: 15px;
-            position: relative;
-            z-index: 1;
-            filter: drop-shadow(0 0 10px var(--accent));
-        }
+    @media (max-width: 600px) {
+      header {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+      }
 
-        .category-card h2 {
-            font-size: 1.4rem;
-            color: #fff;
-            margin-bottom: 10px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .category-card p {
-            font-size: 0.95rem;
-            color: #ccc;
-            margin-bottom: 20px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .category-card a {
-            display: inline-block;
-            background: linear-gradient(135deg, var(--accent), var(--primary));
-            color: #fff;
-            padding: 10px 22px;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 600;
-            position: relative;
-            z-index: 1;
-            transition: 0.3s;
-        }
-
-        .category-card a:hover {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            transform: scale(1.08);
-            box-shadow: 0 0 15px var(--accent);
-        }
-
-        /* 🔹 FOOTER */
-        footer {
-            text-align: center;
-            color: #aaa;
-            font-size: 0.9rem;
-            margin-top: 60px;
-            letter-spacing: 0.5px;
-        }
-
-        /* 🔹 RESPONSIVE */
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 2rem;
-            }
-
-            .category-card {
-                padding: 30px 20px;
-            }
-        }
-    </style>
+      h1 {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
 </head>
 
 <body>
-    <nav>
-        <div class="logo">
-            <i class="fas fa-comments"></i> Feedback System
-        </div>
-        <div class="nav-links">
-            <a href="/feedback-display">View Feedback</a>
-            <a href="/analytics">Analytics</a>
-            <a href="/logout">Logout</a>
-        </div>
-    </nav>
+  <div class="overlay"></div>
 
-    <div class="container">
-        <h1>Choose a Feedback Category</h1>
-        <p>Select the type of feedback you’d like to share below.</p>
+  <header>
+    <div class="logo"><i class="fas fa-comment-dots"></i> Feedback System</div>
+    <div class="welcome-text" id="welcomeMsg">Welcome!</div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </header>
 
-        <div class="categories">
-            <div class="category-card">
-                <i class="fas fa-utensils"></i>
-                <h2>Restaurant</h2>
-                <p>Share your dining experience — food, service, and ambiance.</p>
-                <a href="restaurant-feedback.html">Give Feedback</a>
-            </div>
-
-            <div class="category-card">
-                <i class="fas fa-hotel"></i>
-                <h2>Hotel</h2>
-                <p>Rate your stay — comfort, service, and facilities.</p>
-                <a href="hotel-feedback.html">Give Feedback</a>
-            </div>
-
-            <div class="category-card">
-                <i class="fas fa-store"></i>
-                <h2>Mall</h2>
-                <p>How was your shopping experience? Let us know!</p>
-                <a href="mall-feedback.html">Give Feedback</a>
-            </div>
-
-            <div class="category-card">
-                <i class="fas fa-box-open"></i>
-                <h2>Product</h2>
-                <p>Tell us your opinion about our product’s quality.</p>
-                <a href="product-feedback.html">Give Feedback</a>
-            </div>
-
-            <div class="category-card">
-                <i class="fas fa-university"></i>
-                <h2>Institution</h2>
-                <p>Provide feedback on your academic or campus experience.</p>
-                <a href="institution-feedback.html">Give Feedback</a>
-            </div>
-        </div>
-
-        <footer>© 2025 Feedback System | Designed by Arun</footer>
+  <main>
+    <h1>Select a Feedback Category</h1>
+    <div class="cards">
+      <div class="card" onclick="navigateTo('restaurant-feedback.html')">
+        <i class="fas fa-utensils"></i>
+        <h3>Restaurant</h3>
+        <p>Rate your dining experience — taste, service, and ambiance.</p>
+      </div>
+      <div class="card" onclick="navigateTo('hotel-feedback.html')">
+        <i class="fas fa-hotel"></i>
+        <h3>Hotel</h3>
+        <p>Share your stay experience and comfort feedback.</p>
+      </div>
+      <div class="card" onclick="navigateTo('mall-feedback.html')">
+        <i class="fas fa-store"></i>
+        <h3>Mall</h3>
+        <p>Tell us about your shopping satisfaction and facilities.</p>
+      </div>
+      <div class="card" onclick="navigateTo('product-feedback.html')">
+        <i class="fas fa-box-open"></i>
+        <h3>Product</h3>
+        <p>Review quality, design, and performance of purchased items.</p>
+      </div>
+      <div class="card" onclick="navigateTo('institution-feedback.html')">
+        <i class="fas fa-university"></i>
+        <h3>Institution</h3>
+        <p>Evaluate educational quality, faculty, and environment.</p>
+      </div>
     </div>
+
+    <footer>© 2025 Feedback System | Designed by U ARUN</footer>
+  </main>
+
+  <script>
+    // Fetch username and update greeting
+    async function loadUser() {
+      try {
+        const res = await fetch('/api/name');
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('welcomeMsg').innerHTML = `Welcome, <strong>${data.name}</strong> 👋`;
+        } else {
+          window.location.href = 'index.html';
+        }
+      } catch (err) {
+        console.error('User fetch error:', err);
+        window.location.href = 'index.html';
+      }
+    }
+
+    // Navigation
+    function navigateTo(page) {
+      window.location.href = page;
+    }
+
+    // Logout function
+    async function logout() {
+      document.getElementById('welcomeMsg').innerHTML = "Logging out...";
+      setTimeout(() => {
+        window.location.href = '/logout';
+      }, 800);
+    }
+
+    loadUser();
+  </script>
 </body>
 
 </html>
