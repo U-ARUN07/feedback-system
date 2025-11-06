@@ -4,59 +4,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Feedback History | Feedback System</title>
+    <title>Feedback Dashboard</title>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
     <style>
-        :root {
-            --primary: #4361ee;
-            --secondary: #3a0ca3;
-            --accent: #4cc9f0;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --success: #4CAF50;
-            --warning: #ff9f1c;
-            --danger: #e63946;
-            --card-bg: rgba(255, 255, 255, 0.1);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            color: var(--light);
-            margin: 0;
-            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background: url('feedback-display-bg.jpeg') no-repeat center center/cover;
+            background-attachment: fixed;
+            color: #fff;
             min-height: 100vh;
+            padding: 40px 20px;
+            overflow-x: hidden;
         }
 
-        .glass-container {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top left, rgba(0, 200, 255, 0.15), rgba(0, 0, 60, 0.9));
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: auto;
+            padding: 35px;
+            background: rgba(255, 255, 255, 0.07);
             border-radius: 20px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 0 40px rgba(0, 200, 255, 0.25);
+            animation: fadeIn 1.2s ease-in-out;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            padding: 30px;
-            max-width: 900px;
-            margin: 40px auto;
         }
 
-        .header {
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            text-align: center;
+            color: #4cc9f0;
+            font-size: 2.5rem;
+            margin-bottom: 25px;
+            text-shadow: 0 0 20px rgba(76, 201, 240, 0.6);
+            letter-spacing: 1px;
+        }
+
+        .filters {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
             margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .header h1 {
-            margin: 0;
-            font-size: 2.2rem;
-            background: linear-gradient(to right, var(--accent), var(--primary));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            font-weight: 700;
+        select,
+        input {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 10px 15px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: 0.3s ease;
+        }
+
+        select:hover,
+        input:focus {
+            background: rgba(76, 201, 240, 0.25);
+            border-color: #4cc9f0;
+            box-shadow: 0 0 10px rgba(76, 201, 240, 0.5);
         }
 
         .feedback-list {
@@ -65,379 +104,301 @@
             gap: 20px;
         }
 
-        .feedback-item {
-            background: var(--card-bg);
+        .feedback-card {
+            background: rgba(255, 255, 255, 0.08);
             border-radius: 15px;
-            padding: 25px;
-            transition: all 0.3s ease;
-            border-left: 5px solid var(--accent);
+            padding: 22px 25px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: 0.35s ease;
             position: relative;
             overflow: hidden;
         }
 
-        .feedback-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        .feedback-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(76, 201, 240, 0.5);
         }
 
-        .feedback-item::before {
-            content: '';
+        .feedback-card::before {
+            content: "";
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(45deg, transparent 65%, rgba(76, 201, 240, 0.1) 100%);
-            z-index: -1;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(76, 201, 240, 0.15), transparent);
+            opacity: 0;
+            transition: opacity 0.5s ease;
         }
 
-        .feedback-header {
+        .feedback-card:hover::before {
+            opacity: 1;
+        }
+
+        .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+            margin-bottom: 12px;
         }
 
-        .feedback-category {
-            font-size: 1.3rem;
+        .category {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             font-weight: 600;
-            color: var(--accent);
-            display: flex;
-            align-items: center;
+            color: #ffb347;
+            font-size: 1.05rem;
         }
 
-        .feedback-category i {
-            margin-right: 10px;
+        .timestamp {
+            font-size: 0.85rem;
+            color: #aaa;
         }
 
-        .feedback-date {
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .ratings-grid {
+        .ratings {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 15px 0;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
         }
 
-        .rating-item {
-            display: flex;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.2);
+        .rating-box {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
             padding: 10px 15px;
-            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+            color: #fff;
         }
 
         .rating-value {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--danger), var(--warning), var(--success));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-right: 15px;
-            color: var(--dark);
-            flex-shrink: 0;
-        }
-
-        .rating-label {
-            font-weight: 500;
-            margin-right: 10px;
-        }
-
-        .rating-text {
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .comments-section {
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px dashed rgba(255, 255, 255, 0.2);
-        }
-
-        .comments-label {
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: var(--accent);
-            display: flex;
-            align-items: center;
-        }
-
-        .comments-label i {
-            margin-right: 10px;
-        }
-
-        .comments-content {
-            background: rgba(0, 0, 0, 0.2);
-            padding: 15px;
+            background: linear-gradient(135deg, #4cc9f0, #4361ee);
+            color: #fff;
+            font-weight: 600;
+            padding: 5px 10px;
             border-radius: 8px;
+        }
+
+        .comments {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            color: #eee;
             line-height: 1.6;
+        }
+
+        .comments strong {
+            color: #4cc9f0;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 35px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            text-decoration: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+        }
+
+        .btn.back {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn.back:hover {
+            background: #4cc9f0;
+            color: #222;
+            box-shadow: 0 0 10px rgba(76, 201, 240, 0.5);
+        }
+
+        .btn.analytics {
+            background: rgba(67, 97, 238, 0.3);
+            color: #4cc9f0;
+            border: 1px solid rgba(67, 97, 238, 0.4);
+        }
+
+        .btn.analytics:hover {
+            background: #4cc9f0;
+            color: #222;
+            box-shadow: 0 0 10px rgba(76, 201, 240, 0.5);
         }
 
         .no-feedback {
             text-align: center;
             padding: 40px;
-            font-size: 1.2rem;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .action-links {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 40px;
-            flex-wrap: wrap;
-        }
-
-        .action-link {
-            background: rgba(67, 97, 238, 0.2);
-            color: var(--accent);
-            padding: 12px 25px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border: 1px solid var(--accent);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .action-link:hover {
-            background: rgba(67, 97, 238, 0.4);
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(76, 201, 240, 0.2);
-        }
-
-        .action-link.analytics {
-            background: rgba(76, 201, 240, 0.2);
-            border-color: var(--accent);
-        }
-
-        .action-link.logout {
-            background: rgba(230, 57, 70, 0.2);
-            color: var(--danger);
-            border-color: var(--danger);
-        }
-
-        .action-link.logout:hover {
-            background: rgba(230, 57, 70, 0.4);
-        }
-
-        .loading {
-            text-align: center;
-            padding: 30px;
-            color: rgba(255, 255, 255, 0.7);
             font-size: 1.1rem;
+            color: #ccc;
         }
 
-        .loading i {
-            animation: spin 1s linear infinite;
-            margin-right: 10px;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        .error-message {
-            color: var(--danger);
+        footer {
             text-align: center;
-            padding: 20px;
-            background: rgba(230, 57, 70, 0.1);
-            border-radius: 8px;
-            margin: 20px 0;
+            margin-top: 40px;
+            font-size: 0.85rem;
+            color: #aaa;
         }
 
-        @media (max-width: 768px) {
-            .glass-container {
-                margin: 20px;
+        @media (max-width: 600px) {
+            .container {
                 padding: 20px;
             }
 
-            .header h1 {
+            h1 {
                 font-size: 1.8rem;
             }
 
-            .ratings-grid {
-                grid-template-columns: 1fr;
+            .rating-box {
+                flex-direction: column;
+                align-items: flex-start;
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="glass-container">
-        <div class="header">
-            <h1><i class="fas fa-history"></i> Your Feedback History</h1>
+    <div class="overlay"></div>
+
+    <div class="container">
+        <h1><i class="fas fa-comments"></i> Feedback Display Dashboard</h1>
+
+        <!-- Filters -->
+        <div class="filters">
+            <select id="categoryFilter">
+                <option value="All">All Categories</option>
+                <option value="Restaurant">Restaurant</option>
+                <option value="Hotel">Hotel</option>
+                <option value="Mall">Mall</option>
+                <option value="Product">Product</option>
+                <option value="Institution">Institution</option>
+            </select>
+
+            <select id="sortOrder">
+                <option value="newest">Newest → Oldest</option>
+                <option value="oldest">Oldest → Newest</option>
+            </select>
+
+            <input type="text" id="searchName" placeholder="Search by name...">
         </div>
 
-        <div id="feedback-list">
-            <div class="loading">
-                <i class="fas fa-spinner"></i> Loading your feedback...
-            </div>
+        <div id="feedbackList" class="feedback-list">
+            <div class="no-feedback"><i class="fas fa-spinner fa-spin"></i> Loading feedback...</div>
         </div>
 
-        <div class="action-links">
-            <a href="/feedback" class="action-link">
-                <i class="fas fa-arrow-left"></i> Back to Categories
-            </a>
-            <a href="/analytics" class="action-link analytics">
-                <i class="fas fa-chart-line"></i> View Analytics
-            </a>
-            <a href="/logout" class="action-link logout">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
+        <div class="action-buttons">
+            <a href="feedback.html" class="btn back"><i class="fas fa-arrow-left"></i> Back to Categories</a>
+            <a href="analytics.html" class="btn analytics"><i class="fas fa-chart-line"></i> View Analytics</a>
         </div>
+
+        <footer>© 2025 Feedback System | Designed by Arun</footer>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const feedbackList = document.getElementById('feedback-list');
+        let allFeedback = [];
 
-            fetch('/api/feedback')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.length === 0) {
-                        feedbackList.innerHTML = `
-                            <div class="no-feedback">
-                                <i class="far fa-comment-dots"></i>
-                                <p>You haven't submitted any feedback yet.</p>
-                                <a href="/feedback" class="action-link" style="display: inline-flex; margin-top: 15px;">
-                                    <i class="fas fa-plus"></i> Submit Your First Feedback
-                                </a>
-                            </div>
-                        `;
-                        return;
-                    }
-
-                    feedbackList.innerHTML = '';
-
-                    data.forEach(feedback => {
-                        const item = document.createElement('div');
-                        item.className = 'feedback-item';
-
-                        // Get icon based on category
-                        let categoryIcon;
-                        switch (feedback.category) {
-                            case 'Restaurant':
-                                categoryIcon = 'fa-utensils';
-                                break;
-                            case 'Hotel':
-                                categoryIcon = 'fa-hotel';
-                                break;
-                            case 'Product':
-                                categoryIcon = 'fa-box-open';
-                                break;
-                            case 'Mall':
-                                categoryIcon = 'fa-shopping-cart';
-                                break;
-                            case 'Institution':
-                                categoryIcon = 'fa-university';
-                                break;
-                            default:
-                                categoryIcon = 'fa-star';
-                        }
-
-                        item.innerHTML = `
-                            <div class="feedback-header">
-                                <span class="feedback-category">
-                                    <i class="fas ${categoryIcon}"></i>
-                                    ${feedback.category || 'General'} Feedback
-                                </span>
-                                <span class="feedback-date">${formatDate(feedback.timestamp)}</span>
-                            </div>
-
-                            <div class="ratings-grid">
-                                <div class="rating-item">
-                                    <span class="rating-value">${feedback['q1-rating'] || '?'}</span>
-                                    <span class="rating-label">Question 1:</span>
-                                    <span class="rating-text">${getRatingText(feedback['q1-rating'])}</span>
-                                </div>
-
-                                <div class="rating-item">
-                                    <span class="rating-value">${feedback['q2-rating'] || '?'}</span>
-                                    <span class="rating-label">Question 2:</span>
-                                    <span class="rating-text">${getRatingText(feedback['q2-rating'])}</span>
-                                </div>
-
-                                <div class="rating-item">
-                                    <span class="rating-value">${feedback['q3-rating'] || '?'}</span>
-                                    <span class="rating-label">Question 3:</span>
-                                    <span class="rating-text">${getRatingText(feedback['q3-rating'])}</span>
-                                </div>
-
-                                <div class="rating-item">
-                                    <span class="rating-value">${feedback['q4-rating'] || '?'}</span>
-                                    <span class="rating-label">Question 4:</span>
-                                    <span class="rating-text">${getRatingText(feedback['q4-rating'])}</span>
-                                </div>
-                            </div>
-
-                            <div class="comments-section">
-                                <div class="comments-label">
-                                    <i class="far fa-comment"></i> Your Comments
-                                </div>
-                                <div class="comments-content">
-                                    ${feedback.comments || '<em>No additional comments provided</em>'}
-                                </div>
-                            </div>
-                        `;
-
-                        feedbackList.appendChild(item);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error fetching feedback:', error);
-                    feedbackList.innerHTML = `
-                        <div class="error-message">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            Failed to load feedback. Please try again later.<br>
-                            <small>${error.message}</small>
-                        </div>
-                    `;
-                });
-
-            function formatDate(timestamp) {
-                if (!timestamp) return 'Unknown date';
-                const date = new Date(timestamp);
-                return date.toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
+        document.addEventListener('DOMContentLoaded', async function () {
+            const feedbackList = document.getElementById('feedbackList');
+            try {
+                const res = await fetch('/api/feedback');
+                if (!res.ok) throw new Error('Network error');
+                allFeedback = await res.json();
+                renderFeedback(allFeedback);
+            } catch (error) {
+                feedbackList.innerHTML = `<div class="no-feedback">⚠️ Failed to load feedback.</div>`;
             }
 
-            function getRatingText(rating) {
-                if (!rating) return 'Not rated';
-                const num = parseInt(rating);
-                if (num <= 2) return 'Very Poor';
-                if (num <= 4) return 'Poor';
-                if (num <= 6) return 'Average';
-                if (num <= 8) return 'Good';
-                if (num <= 10) return 'Excellent';
-                return 'Unknown';
-            }
+            document.getElementById('categoryFilter').addEventListener('change', filterFeedback);
+            document.getElementById('sortOrder').addEventListener('change', filterFeedback);
+            document.getElementById('searchName').addEventListener('input', filterFeedback);
         });
+
+        function renderFeedback(data) {
+            const feedbackList = document.getElementById('feedbackList');
+            if (!data || data.length === 0) {
+                feedbackList.innerHTML = '<div class="no-feedback"><i class="far fa-comment-dots"></i> No feedback available.</div>';
+                return;
+            }
+
+            feedbackList.innerHTML = '';
+            data.forEach(f => {
+                const icon = getCategoryIcon(f.category);
+                const card = document.createElement('div');
+                card.className = 'feedback-card';
+                card.innerHTML = `
+          <div class="card-header">
+            <div class="category"><i class="fas ${icon}"></i> ${f.category}</div>
+            <div class="timestamp">${formatDate(f.timestamp)}</div>
+          </div>
+          <div class="ratings">
+            <div class="rating-box"><span>Food Quality:</span><span class="rating-value">${f['q1-rating'] || '-'}</span></div>
+            <div class="rating-box"><span>Service:</span><span class="rating-value">${f['q2-rating'] || '-'}</span></div>
+            <div class="rating-box"><span>Ambience:</span><span class="rating-value">${f['q3-rating'] || '-'}</span></div>
+            <div class="rating-box"><span>Staff:</span><span class="rating-value">${f['q4-rating'] || '-'}</span></div>
+          </div>
+          <div class="comments"><strong>Comments:</strong> ${f.comments || '<em>No comments</em>'}</div>
+          <div style="margin-top:10px;font-size:0.9rem;color:#bbb;"><i class="fas fa-user"></i> ${f.name || 'Anonymous'}</div>
+        `;
+                feedbackList.appendChild(card);
+            });
+        }
+
+        function filterFeedback() {
+            const category = document.getElementById('categoryFilter').value;
+            const order = document.getElementById('sortOrder').value;
+            const search = document.getElementById('searchName').value.toLowerCase();
+
+            let filtered = allFeedback;
+
+            if (category !== 'All') filtered = filtered.filter(f => f.category === category);
+            if (search) filtered = filtered.filter(f => f.name?.toLowerCase().includes(search));
+
+            filtered.sort((a, b) => {
+                return order === 'newest'
+                    ? new Date(b.timestamp) - new Date(a.timestamp)
+                    : new Date(a.timestamp) - new Date(b.timestamp);
+            });
+
+            renderFeedback(filtered);
+        }
+
+        function getCategoryIcon(cat) {
+            switch (cat) {
+                case 'Restaurant': return 'fa-utensils';
+                case 'Hotel': return 'fa-hotel';
+                case 'Mall': return 'fa-store';
+                case 'Product': return 'fa-box-open';
+                case 'Institution': return 'fa-university';
+                default: return 'fa-comment';
+            }
+        }
+
+        function formatDate(ts) {
+            if (!ts) return 'Unknown';
+            const d = new Date(ts);
+            return d.toLocaleDateString('en-US', {
+                month: 'short', day: 'numeric', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
     </script>
 </body>
 
