@@ -2,177 +2,350 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hotel Feedback</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hotel Feedback | LuxeStay</title>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Poppins:wght@300;400;600&display=swap"
+        rel="stylesheet">
+
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-image: url('hotel-bg.jpg');
-            background-size: cover;
-            color: white;
-            text-align: center;
-            padding: 20px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        .container {
-            background: rgba(0, 0, 0, 0.7);
-            padding: 20px;
-            border-radius: 10px;
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: url('/hotel-bg.jpg') no-repeat center center/cover;
+            background-attachment: fixed;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 0;
+        }
+
+        .feedback-container {
+            position: relative;
+            z-index: 1;
+            width: 95%;
             max-width: 600px;
-            margin: 50px auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px 25px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            margin: 40px 0 80px 0;
+            backdrop-filter: blur(6px);
+        }
+
+        .heading {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .heading h1 {
+            font-family: 'Great Vibes', cursive;
+            font-size: 2.5rem;
+            color: #5dc1ff;
+        }
+
+        .heading p {
+            font-size: 1rem;
+            color: #f1f1f1;
+        }
+
+        label {
+            display: block;
+            margin-top: 18px;
+            font-weight: 500;
+            font-size: 1rem;
         }
 
         input,
-        textarea,
-        select,
-        button {
-            margin: 10px;
+        textarea {
+            width: 100%;
             padding: 10px;
-            width: 80%;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        button {
-            background-color: #4CAF50;
+            margin-top: 6px;
+            border-radius: 10px;
+            border: none;
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
             color: white;
-            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.3s;
         }
 
-        button:hover {
-            background-color: #45a049;
+        input:focus,
+        textarea:focus {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        textarea {
+            resize: none;
+            height: 80px;
         }
 
         .rating-scale {
             display: flex;
             justify-content: space-between;
-            margin: 10px 0;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
         .rating-scale span {
             width: 30px;
             height: 30px;
-            line-height: 30px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
             border-radius: 50%;
-            background: linear-gradient(to right, red, yellow, green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            color: black;
-            font-weight: bold;
+            transition: 0.3s;
+            margin: 3px;
         }
 
         .rating-scale span:hover {
+            background: #5dc1ff;
+            transform: scale(1.1);
+        }
+
+        .rating-scale span.active {
+            background: #5dc1ff;
+            color: #222;
             transform: scale(1.2);
+            box-shadow: 0 0 8px #5dc1ff;
         }
 
-        a {
-            color: #4CAF50;
+        button {
+            background: linear-gradient(135deg, #5dc1ff, #66e0ff);
+            color: #222;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #66e0ff, #5dc1ff);
+            transform: scale(1.03);
+        }
+
+        .back-btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
             text-decoration: none;
+            transition: 0.3s;
+            font-weight: 500;
         }
 
-        a:hover {
-            text-decoration: underline;
+        .back-btn:hover {
+            background: #5dc1ff;
+            color: #222;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #ccc;
+            font-size: 0.85rem;
+        }
+
+        /* Popup Styles */
+        .popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .popup-content {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .popup-content h2 {
+            color: #5dc1ff;
+            margin-bottom: 20px;
+        }
+
+        .popup-content button {
+            margin: 8px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .popup-content .view-btn {
+            background: #5dc1ff;
+            color: #222;
+        }
+
+        .popup-content .back-btn {
+            background: #00bcd4;
+            color: white;
+        }
+
+        .popup-content button:hover {
+            transform: scale(1.05);
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <h1>Hotel Feedback</h1>
-        <form action="/submit-feedback" method="POST">
-            <input type="text" name="name" placeholder="Your Name" required><br>
-            <input type="email" name="email" placeholder="Your Email" required><br>
-            <input type="hidden" name="category" value="Hotel">
 
-            <!-- Question 1 -->
-            <label for="q1">1. How was the room cleanliness?</label>
-            <div class="rating-scale" id="q1-scale">
-                <span data-value="1">1</span>
-                <span data-value="2">2</span>
-                <span data-value="3">3</span>
-                <span data-value="4">4</span>
-                <span data-value="5">5</span>
-                <span data-value="6">6</span>
-                <span data-value="7">7</span>
-                <span data-value="8">8</span>
-                <span data-value="9">9</span>
-                <span data-value="10">10</span>
-            </div>
-            <input type="hidden" id="q1-rating" name="q1-rating" required><br>
+    <div class="overlay"></div>
 
-            <!-- Question 2 -->
-            <label for="q2">2. How was the staff behavior?</label>
-            <div class="rating-scale" id="q2-scale">
-                <span data-value="1">1</span>
-                <span data-value="2">2</span>
-                <span data-value="3">3</span>
-                <span data-value="4">4</span>
-                <span data-value="5">5</span>
-                <span data-value="6">6</span>
-                <span data-value="7">7</span>
-                <span data-value="8">8</span>
-                <span data-value="9">9</span>
-                <span data-value="10">10</span>
-            </div>
-            <input type="hidden" id="q2-rating" name="q2-rating" required><br>
+    <div class="feedback-container">
+        <div class="heading">
+            <h1>LuxeStay</h1>
+            <p>We value your comfort and your opinion 🏨</p>
+        </div>
 
-            <!-- Question 3 -->
-            <label for="q3">3. How was the food quality?</label>
-            <div class="rating-scale" id="q3-scale">
-                <span data-value="1">1</span>
-                <span data-value="2">2</span>
-                <span data-value="3">3</span>
-                <span data-value="4">4</span>
-                <span data-value="5">5</span>
-                <span data-value="6">6</span>
-                <span data-value="7">7</span>
-                <span data-value="8">8</span>
-                <span data-value="9">9</span>
-                <span data-value="10">10</span>
-            </div>
-            <input type="hidden" id="q3-rating" name="q3-rating" required><br>
+        <form id="feedbackForm">
+            <label>Name</label>
+            <input type="text" id="name" placeholder="Enter your name" required>
 
-            <!-- Question 4 -->
-            <label for="q4">4. How was the overall experience?</label>
-            <div class="rating-scale" id="q4-scale">
-                <span data-value="1">1</span>
-                <span data-value="2">2</span>
-                <span data-value="3">3</span>
-                <span data-value="4">4</span>
-                <span data-value="5">5</span>
-                <span data-value="6">6</span>
-                <span data-value="7">7</span>
-                <span data-value="8">8</span>
-                <span data-value="9">9</span>
-                <span data-value="10">10</span>
-            </div>
-            <input type="hidden" id="q4-rating" name="q4-rating" required><br>
+            <label>Email</label>
+            <input type="email" id="email" placeholder="Enter your email" required>
 
-            <textarea name="comments" placeholder="Your Comments" required></textarea><br>
+            <label>Room Cleanliness (1–10)</label>
+            <div class="rating-scale" id="q1-scale"></div>
+            <input type="hidden" id="q1-rating">
+
+            <label>Service Quality (1–10)</label>
+            <div class="rating-scale" id="q2-scale"></div>
+            <input type="hidden" id="q2-rating">
+
+            <label>Food (1–10)</label>
+            <div class="rating-scale" id="q3-scale"></div>
+            <input type="hidden" id="q3-rating">
+
+            <label>Staff Courtesy (1–10)</label>
+            <div class="rating-scale" id="q4-scale"></div>
+            <input type="hidden" id="q4-rating">
+
+            <label>Comments</label>
+            <textarea id="comments" placeholder="Share your experience..."></textarea>
+
             <button type="submit">Submit Feedback</button>
+            <a href="feedback.html" class="back-btn">← Back to Categories</a>
         </form>
-        <a href="/feedback">Go back to categories</a>
+
+        <footer>© 2025 LuxeStay | Designed by Arun</footer>
+    </div>
+
+    <!-- Popup -->
+    <div class="popup" id="successPopup">
+        <div class="popup-content">
+            <h2>🎉 Thank You!</h2>
+            <p>Your feedback has been submitted successfully.</p>
+            <button class="view-btn" onclick="window.location.href='feedback-display.html'">View Feedback</button>
+            <button class="back-btn" onclick="window.location.href='feedback.html'">Go to Categories</button>
+        </div>
     </div>
 
     <script>
-        // Handle rating selection
+        // Rating setup
+        function createRatingScale(scaleId) {
+            const scale = document.getElementById(scaleId);
+            for (let i = 1; i <= 10; i++) {
+                const span = document.createElement("span");
+                span.textContent = i;
+                span.dataset.value = i;
+                scale.appendChild(span);
+            }
+        }
+
         function handleRatingSelection(scaleId, inputId) {
             const scale = document.getElementById(scaleId);
             const input = document.getElementById(inputId);
-            scale.querySelectorAll('span').forEach(span => {
-                span.addEventListener('click', () => {
-                    scale.querySelectorAll('span').forEach(s => s.classList.remove('active'));
-                    span.classList.add('active');
-                    input.value = span.getAttribute('data-value');
+            const spans = scale.querySelectorAll("span");
+            spans.forEach(span => {
+                span.addEventListener("click", () => {
+                    spans.forEach(s => s.classList.remove("active"));
+                    span.classList.add("active");
+                    input.value = span.dataset.value;
                 });
             });
         }
 
-        // Initialize rating scales
-        handleRatingSelection('q1-scale', 'q1-rating');
-        handleRatingSelection('q2-scale', 'q2-rating');
-        handleRatingSelection('q3-scale', 'q3-rating');
-        handleRatingSelection('q4-scale', 'q4-rating');
+        ["q1", "q2", "q3", "q4"].forEach(q => {
+            createRatingScale(`${q}-scale`);
+            handleRatingSelection(`${q}-scale`, `${q}-rating`);
+        });
+
+        // Form submission
+        document.getElementById("feedbackForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const feedback = {
+                name: document.getElementById("name").value,
+                email: document.getElementById("email").value,
+                category: "Hotel",
+                "q1-rating": document.getElementById("q1-rating").value,
+                "q2-rating": document.getElementById("q2-rating").value,
+                "q3-rating": document.getElementById("q3-rating").value,
+                "q4-rating": document.getElementById("q4-rating").value,
+                comments: document.getElementById("comments").value,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                const response = await fetch("/submit-feedback", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(feedback)
+                });
+
+                if (response.ok) {
+                    document.getElementById("successPopup").style.display = "flex";
+                } else {
+                    alert("❌ Error submitting feedback. Try again later.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("⚠️ Connection failed. Please check your network.");
+            }
+        });
     </script>
 </body>
 
