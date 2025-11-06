@@ -1,228 +1,183 @@
-// ✅ FEEDBACK SYSTEM - FINAL FULL SERVER CODE (with intro redirect + JSONBin storage)
-// Author: U ARUN
-
 import express from "express";
 import bodyParser from "body-parser";
 import session from "express-session";
+import fetch from "node-fetch";
 import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 
 dotenv.config();
-const app = express();
-const PORT = process.env.PORT || 4000;
 
-// ✅ Fix for ESM path resolution
+const app = express();
+const port = process.env.PORT || 4000;
+
+// Paths
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ✅ JSONBin API Setup
-const JSONBIN_URL = "https://api.jsonbin.io/v3/b/";
-const JSONBIN_API_KEY = process.env.JSONBIN_API_KEY;
-const USER_BIN_ID = process.env.USER_BIN_ID;
-const FEEDBACK_BIN_ID = process.env.FEEDBACK_BIN_ID;
-
-// ✅ Fetch support for Node 16+
-const fetchFn = global.fetch || ((...args) => import("node-fetch").then(({ default: f }) => f(...args)));
-
-// ✅ Middleware
+// Middleware
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, "public")));
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "Arun@2006",
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
   })
 );
+app.use(express.static(path.join(__dirname, "public")));
 
-// ====================================================
-// 🌐 ROUTES
-// ====================================================
+// JSONBin details
+const API_KEY = process.env.JSONBIN_API_KEY;
+const USERS_BIN = process.env.USER_BIN_ID;
+const FEEDBACK_BIN = process.env.FEEDBACK_BIN_ID;
+const BASE_URL = "https://api.jsonbin.io/v3/b";
 
-// 🏠 Landing (Intro Page)
+// Fetch Bin Data
+async function getBinData(binId) {
+  try {
+    const res = await fetch(`${BASE_URL}/${binId}/latest`, {
+      headers: { "X-Master-Key": API_KEY },
+    });
+    const data = await res.json();
+    return data.record || [];
+  } catch (err) {
+    console.error("Error fetching JSONBin data:", err);
+    return [];
+  }
+}
+
+// Update Bin Data
+async function updateBinData(binId, newData) {
+  try {
+    await fetch(`${BASE_URL}/${binId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Master-Key": API_KEY,
+      },
+      body: JSON.stringify(newData),
+    });
+  } catch (err) {
+    console.error("Error updating JSONBin data:", err);
+  }
+}
+
+//
+// 🌟 ROUTES
+//
+
+// Intro Page
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "intro.html"));
 });
 
-// ✅ Redirect for /intro
-app.get("/intro", (req, res) => {
-  res.redirect("/");
+// Register Page
+app.get("/register", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "register.html"));
 });
 
-// ====================================================
-// 🔐 AUTHENTICATION
-// ====================================================
-
-// 🧾 Register User
-app.post("/api/register", async (req, res) => {
-  const { fullname, email, username, password } = req.body;
-
-  if (!fullname || !email || !username || !password)
-    return res.status(400).json({ message: "⚠️ All fields are required." });
-
-  try {
-    // Fetch existing users
-    const response = await fetchFn(`${JSONBIN_URL}${USER_BIN_ID}/latest`, {
-      headers: { "X-Master-Key": JSONBIN_API_KEY },
-    });
-    const data = await response.json();
-    const users = data.record || [];
-
-    // Check for duplicates
-    if (users.some((u) => u.username === username))
-      return res.status(409).json({ message: "❌ Username already exists." });
-
-    users.push({ fullname, email, username, password });
-
-    // Save updated users
-    await fetchFn(`${JSONBIN_URL}${USER_BIN_ID}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Master-Key": JSONBIN_API_KEY,
-      },
-      body: JSON.stringify(users),
-    });
-
-    res.status(201).json({ message: "✅ Registration successful!" });
-  } catch (error) {
-    console.error("Registration error:", error);
-    res.status(500).json({ message: "Server error during registration." });
-  }
+// Login Page
+app.get("/login", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// 🧍 Login User
-app.post("/api/login", async (req, res) => {
+// Register Logic
+app.post("/register", async (req, res) => {
+  const { name, email, username, password, confirmPassword } = req.body;
+
+  if (!name || !email || !username || !password || !confirmPassword)
+    return res.status(400).send("All fields are required");
+
+  if (password !== confirmPassword)
+    return res.status(400).send("Passwords do not match");
+
+  const users = await getBinData(USERS_BIN);
+  if (users.some((u) => u.username === username))
+    return res.status(400).send("Username already exists");
+
+  const newUser = { name, email, username, password };
+  users.push(newUser);
+  await updateBinData(USERS_BIN, users);
+
+  console.log(`✅ Registered: ${username}`);
+  res.redirect("/login");
+});
+
+// Login Logic
+app.post("/login", async (req, res) => {
   const { username, password } = req.body;
+  const users = await getBinData(USERS_BIN);
+  const user = users.find(
+    (u) => u.username === username && u.password === password
+  );
 
-  if (!username || !password)
-    return res.status(400).json({ message: "⚠️ Enter both fields." });
+  if (!user) return res.status(401).send("Invalid credentials");
 
-  try {
-    const response = await fetchFn(`${JSONBIN_URL}${USER_BIN_ID}/latest`, {
-      headers: { "X-Master-Key": JSONBIN_API_KEY },
-    });
-    const data = await response.json();
-    const users = data.record || [];
-
-    const user = users.find(
-      (u) => u.username === username && u.password === password
-    );
-
-    if (!user) return res.status(401).json({ message: "❌ Invalid credentials." });
-
-    req.session.user = user;
-    res.json({ message: `Welcome ${user.fullname}!` });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "Server error during login." });
-  }
+  req.session.user = user;
+  console.log(`✅ Logged in: ${user.name}`);
+  res.redirect("/feedback");
 });
 
-// 🧾 Get User Name
-app.get("/api/name", (req, res) => {
-  if (req.session.user) res.json({ name: req.session.user.fullname });
-  else res.status(401).json({ message: "Not logged in." });
-});
-
-// 🚪 Logout
-app.get("/logout", (req, res) => {
-  const name = req.session.user?.fullname || "User";
-  req.session.destroy(() => {
-    res.send(`
-      <html style="font-family: Arial; background: #0d1b2a; color: white; text-align: center; padding: 100px;">
-        <h1>👋 Visit Again, ${name}!</h1>
-        <p>We hope to see your valuable feedback soon!</p>
-        <a href="/" style="color:#4cc9f0;text-decoration:none;font-size:18px;">Return to Home</a>
-      </html>
-    `);
-  });
-});
-
-// ====================================================
-// 🧩 AUTH MIDDLEWARE
-// ====================================================
-function ensureLogin(req, res, next) {
-  if (req.session.user) next();
-  else res.redirect("/index.html");
-}
-
-// ====================================================
-// 📝 FEEDBACK SYSTEM
-// ====================================================
-
-// Submit feedback
-app.post("/submit-feedback", ensureLogin, async (req, res) => {
-  const feedback = req.body;
-  feedback.username = req.session.user.username;
-  feedback.fullname = req.session.user.fullname;
-  feedback.timestamp = new Date().toISOString();
-
-  try {
-    const response = await fetchFn(`${JSONBIN_URL}${FEEDBACK_BIN_ID}/latest`, {
-      headers: { "X-Master-Key": JSONBIN_API_KEY },
-    });
-    const data = await response.json();
-    const feedbacks = data.record || [];
-
-    feedbacks.push(feedback);
-
-    await fetchFn(`${JSONBIN_URL}${FEEDBACK_BIN_ID}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Master-Key": JSONBIN_API_KEY,
-      },
-      body: JSON.stringify(feedbacks),
-    });
-
-    res.status(200).json({ message: "✅ Feedback submitted successfully!" });
-  } catch (error) {
-    console.error("Feedback error:", error);
-    res.status(500).json({ message: "Error submitting feedback." });
-  }
-});
-
-// Get feedback list
-app.get("/api/feedback", ensureLogin, async (req, res) => {
-  try {
-    const response = await fetchFn(`${JSONBIN_URL}${FEEDBACK_BIN_ID}/latest`, {
-      headers: { "X-Master-Key": JSONBIN_API_KEY },
-    });
-    const data = await response.json();
-    res.json(data.record || []);
-  } catch (error) {
-    console.error("Feedback fetch error:", error);
-    res.status(500).json({ message: "Error fetching feedback." });
-  }
-});
-
-// ====================================================
-// 🌐 PAGE ROUTES
-// ====================================================
-app.get("/feedback", ensureLogin, (req, res) => {
+// Feedback Categories
+app.get("/feedback", (req, res) => {
+  if (!req.session.user) return res.redirect("/login");
   res.sendFile(path.join(__dirname, "public", "feedback.html"));
 });
 
-app.get("/feedback-display", ensureLogin, (req, res) => {
+// Submit Feedback
+app.post("/submit-feedback", async (req, res) => {
+  if (!req.session.user) return res.redirect("/login");
+
+  const feedbacks = await getBinData(FEEDBACK_BIN);
+  const newFeedback = {
+    ...req.body,
+    name: req.session.user.name,
+    timestamp: new Date().toISOString(),
+  };
+
+  feedbacks.push(newFeedback);
+  await updateBinData(FEEDBACK_BIN, feedbacks);
+
+  console.log(`✅ Feedback submitted by ${req.session.user.name}`);
+  res.redirect("/feedback-display");
+});
+
+// Feedback Display
+app.get("/feedback-display", (req, res) => {
+  if (!req.session.user) return res.redirect("/login");
   res.sendFile(path.join(__dirname, "public", "feedback-display.html"));
 });
 
-app.get("/analytics", ensureLogin, (req, res) => {
+// Analytics
+app.get("/analytics", (req, res) => {
+  if (!req.session.user) return res.redirect("/login");
   res.sendFile(path.join(__dirname, "public", "analytics.html"));
 });
 
-// Category pages
-["restaurant", "hotel", "mall", "institution", "product"].forEach((category) => {
-  app.get(`/${category}-feedback`, ensureLogin, (req, res) => {
-    res.sendFile(path.join(__dirname, "public", `${category}-feedback.html`));
-  });
+// API - Get Logged-in User
+app.get("/api/name", (req, res) => {
+  if (!req.session.user)
+    return res.status(401).json({ error: "Not logged in" });
+  res.json({ name: req.session.user.name });
 });
 
-// ====================================================
-// 🚀 SERVER START
-// ====================================================
-app.listen(PORT, () => {
-  console.log(`✅ Feedback System running at http://localhost:${PORT}`);
+// API - Get Feedback Data
+app.get("/api/feedback", async (req, res) => {
+  if (!req.session.user)
+    return res.status(401).json({ error: "Not logged in" });
+
+  const feedbacks = await getBinData(FEEDBACK_BIN);
+  res.json(feedbacks);
+});
+
+// Logout
+app.get("/logout", (req, res) => {
+  if (req.session.user) console.log(`👋 ${req.session.user.name} logged out`);
+  req.session.destroy(() => res.redirect("/?logout=1"));
+});
+
+// Start Server
+app.listen(port, () => {
+  console.log(`🚀 Server running on http://localhost:${port}`);
 });
