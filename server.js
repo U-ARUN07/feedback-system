@@ -1,11 +1,10 @@
-// ✅ Feedback System Server.js (Final Version)
-// Developed for: U ARUN
+// ✅ FEEDBACK SYSTEM SERVER — FINAL VERSION
+// Author: U ARUN
 
 import express from "express";
 import bodyParser from "body-parser";
 import session from "express-session";
 import path from "path";
-import fetch from "node-fetch";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 dotenv.config();
@@ -13,11 +12,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// Path setup
+// ✅ Fetch Polyfill (works for Node 16–22)
+const fetchFn = global.fetch || ((...args) => import("node-fetch").then(({ default: f }) => f(...args)));
+
+// ✅ Path setup
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Middleware setup
+// ✅ Middleware setup
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(
@@ -29,7 +31,7 @@ app.use(
 );
 
 // ======================================================
-// 🏠 DEFAULT PAGE (Intro)
+// 🏠 DEFAULT PAGE (INTRO)
 // ======================================================
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "intro.html"));
@@ -42,33 +44,31 @@ app.get("/intro", (req, res) => {
 // ======================================================
 // 🔒 AUTHENTICATION HANDLERS
 // ======================================================
-
 const JSONBIN_API_KEY = process.env.JSONBIN_API_KEY;
 const JSONBIN_URL = "https://api.jsonbin.io/v3/b/";
 const USER_BIN_ID = process.env.USER_BIN_ID;
 const FEEDBACK_BIN_ID = process.env.FEEDBACK_BIN_ID;
 
-// ✅ Register new user
+// ✅ Register a new user
 app.post("/api/register", async (req, res) => {
   const { fullname, email, username, password } = req.body;
-
   if (!fullname || !email || !username || !password)
     return res.status(400).json({ message: "All fields are required." });
 
   try {
-    const response = await fetch(`${JSONBIN_URL}${USER_BIN_ID}/latest`, {
+    const response = await fetchFn(`${JSONBIN_URL}${USER_BIN_ID}/latest`, {
       headers: { "X-Master-Key": JSONBIN_API_KEY },
     });
     const data = await response.json();
     const users = data.record || [];
 
     if (users.find((u) => u.username === username)) {
-      return res.status(400).json({ message: "Username already exists." });
+      return res.status(409).json({ message: "Username already exists." });
     }
 
     users.push({ fullname, email, username, password });
 
-    await fetch(`${JSONBIN_URL}${USER_BIN_ID}`, {
+    await fetchFn(`${JSONBIN_URL}${USER_BIN_ID}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -77,7 +77,7 @@ app.post("/api/register", async (req, res) => {
       body: JSON.stringify(users),
     });
 
-    res.status(200).json({ message: "User registered successfully!" });
+    res.status(201).json({ message: "✅ Registered successfully!" });
   } catch (err) {
     console.error("Register error:", err);
     res.status(500).json({ message: "Server error during registration." });
@@ -87,12 +87,11 @@ app.post("/api/register", async (req, res) => {
 // ✅ Login existing user
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
-
   if (!username || !password)
-    return res.status(400).json({ message: "Enter username and password." });
+    return res.status(400).json({ message: "Username and password required." });
 
   try {
-    const response = await fetch(`${JSONBIN_URL}${USER_BIN_ID}/latest`, {
+    const response = await fetchFn(`${JSONBIN_URL}${USER_BIN_ID}/latest`, {
       headers: { "X-Master-Key": JSONBIN_API_KEY },
     });
     const data = await response.json();
@@ -102,8 +101,7 @@ app.post("/api/login", async (req, res) => {
       (u) => u.username === username && u.password === password
     );
 
-    if (!user)
-      return res.status(401).json({ message: "Invalid username or password." });
+    if (!user) return res.status(401).json({ message: "Invalid credentials." });
 
     req.session.user = user;
     res.json({ message: `Welcome ${user.fullname}!` });
@@ -122,15 +120,12 @@ app.get("/logout", (req, res) => {
 
 // ✅ Get logged-in user info
 app.get("/api/name", (req, res) => {
-  if (req.session.user) {
-    res.json({ name: req.session.user.fullname });
-  } else {
-    res.status(401).json({ message: "Not logged in." });
-  }
+  if (req.session.user) res.json({ name: req.session.user.fullname });
+  else res.status(401).json({ message: "Not logged in." });
 });
 
 // ======================================================
-// 🔐 AUTH MIDDLEWARE (Protect private pages)
+// 🔐 MIDDLEWARE: REQUIRE LOGIN
 // ======================================================
 function ensureLogin(req, res, next) {
   if (req.session.user) next();
@@ -148,7 +143,7 @@ app.post("/submit-feedback", ensureLogin, async (req, res) => {
   feedback.timestamp = new Date().toISOString();
 
   try {
-    const response = await fetch(`${JSONBIN_URL}${FEEDBACK_BIN_ID}/latest`, {
+    const response = await fetchFn(`${JSONBIN_URL}${FEEDBACK_BIN_ID}/latest`, {
       headers: { "X-Master-Key": JSONBIN_API_KEY },
     });
     const data = await response.json();
@@ -156,7 +151,7 @@ app.post("/submit-feedback", ensureLogin, async (req, res) => {
 
     feedbacks.push(feedback);
 
-    await fetch(`${JSONBIN_URL}${FEEDBACK_BIN_ID}`, {
+    await fetchFn(`${JSONBIN_URL}${FEEDBACK_BIN_ID}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -165,17 +160,17 @@ app.post("/submit-feedback", ensureLogin, async (req, res) => {
       body: JSON.stringify(feedbacks),
     });
 
-    res.status(200).json({ message: "Feedback submitted successfully!" });
+    res.status(200).json({ message: "✅ Feedback submitted successfully!" });
   } catch (err) {
     console.error("Feedback error:", err);
     res.status(500).json({ message: "Error saving feedback." });
   }
 });
 
-// ✅ Get all feedback
+// ✅ Retrieve all feedback
 app.get("/api/feedback", ensureLogin, async (req, res) => {
   try {
-    const response = await fetch(`${JSONBIN_URL}${FEEDBACK_BIN_ID}/latest`, {
+    const response = await fetchFn(`${JSONBIN_URL}${FEEDBACK_BIN_ID}/latest`, {
       headers: { "X-Master-Key": JSONBIN_API_KEY },
     });
     const data = await response.json();
@@ -202,8 +197,8 @@ app.get("/analytics", ensureLogin, (req, res) => {
 });
 
 // ======================================================
-// 🚀 SERVER START
+// 🚀 START SERVER
 // ======================================================
 app.listen(PORT, () => {
-  console.log(`✅ Feedback System running at: http://localhost:${PORT}`);
+  console.log(`✅ Feedback System is live at: http://localhost:${PORT}`);
 });
